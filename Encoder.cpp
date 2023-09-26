@@ -51,7 +51,6 @@ void Encoder::_sendChar(uint8_t asciiChar) {
       uint16_t xxxxxxx = _ascii8ToScamp6(_hold);
       uint16_t yyyyyyy = _ascii8ToScamp6(asciiChar);
       uint16_t codeWord12 = (yyyyyyy << 6) | xxxxxxx;
-      printf("DEBUG %X\n", codeWord12);
       _sender->queue(codeWord12);
    }
    _count++;

@@ -26,9 +26,9 @@ void FrameReceiver::bitTick(bool mark) {
     _bitCount++;
 
     // Test the correlation to see if we've found a frame sync
-    int32_t c = kc1fsz::scamp::correlate(_accumulator, Encoder::SYNC_FRAME_1);
+    int32_t c = scamp::correlate(_accumulator, Encoder::SYNC_FRAME_1);
     if (c == 30) {
-        cout << "[SYNC FOUND]";
+        //cout << "[SYNC FOUND]";
         _frameSync = true;
         _bitCount = 0;
     }  
@@ -41,16 +41,15 @@ void FrameReceiver::bitTick(bool mark) {
     }
 }
 
-void FrameReceiver::_processFrame(uint32_t frame30) {
+void FrameReceiver::_processFrame(scampFrame30_t frame) {
 
-    // Pull out the code word
-    uint32_t codeWord24 = kc1fsz::scamp::frame_to_codeword24(frame30);
     // Undo the Golay encoding
     uint8_t bitErrors;
-    uint16_t codeWord12 = kw4ti::golay_decode(codeWord24, &bitErrors);
+    scampCodeWord12_t codeWord = kw4ti::golay_decode(scamp::frame_to_codeword24(frame), 
+        &bitErrors);
 
-    uint8_t xxxxxx = codeWord12 & 0b111111;
-    uint8_t yyyyyy = (codeWord12 >> 6) & 0b111111;
+    uint8_t xxxxxx = codeWord & 0b111111;
+    uint8_t yyyyyy = (codeWord >> 6) & 0b111111;
 
     if (xxxxxx) {
         char asc = Encoder::SCAMP6_TO_ASCII8[xxxxxx];
@@ -64,4 +63,3 @@ void FrameReceiver::_processFrame(uint32_t frame30) {
 }
 
 }
-

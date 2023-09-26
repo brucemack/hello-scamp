@@ -2,6 +2,7 @@
 #define _FrameReceiver_h
 
 #include <cinttypes>
+#include "Util.h"
 #include "Decoder.h"
 
 namespace scamp {
@@ -17,7 +18,7 @@ namespace scamp {
 
     private:
 
-        void _processFrame(uint32_t rawFrame);
+        void _processFrame(scampFrame30_t rawFrame);
 
         uint32_t _accumulator;
         bool _frameSync;

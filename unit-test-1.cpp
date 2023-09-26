@@ -76,7 +76,7 @@ int main(int argc, const char** argv) {
     // Make sure the code is reversible
     {
         // Test 12-bit codeword
-        const uint16_t wd = 0b100100100100;
+        const scampCodeWord12_t wd = 0b100100100100;
         // Coded 
         const uint16_t wd_enc = kw4ti::golay_mult(wd);
         // Reverse
@@ -90,15 +90,15 @@ int main(int argc, const char** argv) {
         const uint8_t data_x = 0b010000;
         const uint8_t data_y = 0b111110;
         // Make the code word
-        const uint16_t data_12 = (data_y << 6) | data_x;
-        const uint32_t code_word_24 = kw4ti::golay_encode(data_12);
+        const scampCodeWord12_t data_12 = (data_y << 6) | data_x;
+        const scampCodeWord24_t code_word_24 = kw4ti::golay_encode(data_12);
 
         // Inject an error 
-        const uint32_t damaged_code_word_24 = code_word_24 ^ 0b000100000100;
+        const scampCodeWord24_t damaged_code_word_24 = code_word_24 ^ 0b000100000100;
 
         // Decode
         uint8_t biterrors = 0;
-        const uint16_t recovered_data_12 = kw4ti::golay_decode(damaged_code_word_24, &biterrors);
+        const scampCodeWord12_t recovered_data_12 = kw4ti::golay_decode(damaged_code_word_24, &biterrors);
 
         // Check 
         assertm(data_12 == recovered_data_12, "Error correct problem");
@@ -107,30 +107,30 @@ int main(int argc, const char** argv) {
 
     // Make a frame 
     {
-        const uint16_t code_word_24 = 0b000000000000000000000000;
-        const uint32_t expected_frame_30 = 0b100001000010000100001000010000;
-        const uint32_t frame_30 = kc1fsz::scamp::make_frame(code_word_24);
+        const scampCodeWord24_t code_word_24 = 0b000000000000000000000000;
+        const scampFrame30_t expected_frame_30 = 0b100001000010000100001000010000;
+        const scampFrame30_t frame_30 = scamp::make_frame(code_word_24);
         assert(expected_frame_30 == frame_30);
     }
 
     {
         const uint8_t data_x = 0b010000;
         const uint8_t data_y = 0b111110;
-        const uint16_t data_12 = (data_y << 6) | data_x;
-        const uint32_t code_word_24 = kw4ti::golay_encode(data_12);
+        const scampCodeWord12_t data_12 = (data_y << 6) | data_x;
+        const scampCodeWord24_t code_word_24 = kw4ti::golay_encode(data_12);
     }
 
     // Correlation with synchronization frame
     {
-        uint32_t w0 = scamp::Encoder::SYNC_FRAME_1;
-        uint32_t w1 = scamp::Encoder::SYNC_FRAME_1;
-        assert(kc1fsz::scamp::correlate(w0, w1) == 30);
-        assert(kc1fsz::scamp::correlate(w0, ~w1) == -30);
+        scampFrame30_t w0 = scamp::Encoder::SYNC_FRAME_1;
+        scampFrame30_t w1 = scamp::Encoder::SYNC_FRAME_1;
+        assert(scamp::correlate(w0, w1) == 30);
+        assert(scamp::correlate(w0, ~w1) == -30);
         // Mess up one of the bits
-        assert(abs(kc1fsz::scamp::correlate(w0, w1 ^ 0b0001000)) >= 28);
+        assert(abs(scamp::correlate(w0, w1 ^ 0b0001000)) >= 28);
         // Shift to show that there is no auto-correlation
-        assert(abs(kc1fsz::scamp::correlate(w0, w1 >> 1)) < 5);
-        assert(abs(kc1fsz::scamp::correlate(w0, w1 << 1)) < 5);
+        assert(abs(scamp::correlate(w0, w1 >> 1)) < 5);
+        assert(abs(scamp::correlate(w0, w1 << 1)) < 5);
     }
 
     // Frame sending test

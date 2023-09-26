@@ -1,8 +1,7 @@
 #ifndef _FrameSender
 #define _FrameSender
 
-#include <cinttypes>
-#include "Encoder.h"
+#include "FrameSender.h"
 
 #define FRAME_SENDER_QUEUE_SIZE 64
 
@@ -37,7 +36,7 @@ namespace scamp {
         void bitTicks(unsigned int tickCount);
         void disable();
         bool canQueue() const;
-        void queue(uint16_t codeWord12);
+        void queue(scampCodeWord12_t codeWord12);
         bool isActive();
     
     private:
@@ -48,12 +47,12 @@ namespace scamp {
         Radio* _radio;
         bool _enabled;
         bool _radioEnabled;
-        uint32_t _workingFrame;
-        uint16_t _sentFrameBits;
+        scampFrame30_t _workingFrame;
+        unsigned int _sentFrameBits;
         // This queue contains 12-bit code words (i.e. they have not been Golay encoded yet)
-        uint16_t _outQueue[FRAME_SENDER_QUEUE_SIZE];
-        uint16_t _outQueueSize;
-        const uint32_t _idleFrame;
+        scampCodeWord12_t _outQueue[FRAME_SENDER_QUEUE_SIZE];
+        unsigned int _outQueueSize;
+        const scampFrame30_t _idleFrame;
     };
 }
 

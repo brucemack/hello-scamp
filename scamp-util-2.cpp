@@ -18,8 +18,7 @@
 #define MASK30_4_1 0b000000000000000000000111100000  // Shift down  5
 #define MASK30_4_0 0b000000000000000000000000001111  // Shift down  0
 
-namespace kc1fsz {
-    namespace scamp {
+namespace scamp {
 
 /**
  * @param data_4 4-bit int
@@ -33,7 +32,7 @@ uint8_t add_comp(uint8_t data_4) {
     }
 }
 
-uint32_t make_frame(uint32_t codeword_24) {
+scampFrame30_t make_frame(scampCodeWord24_t codeword_24) {
     
     // Pull out the 4-bit sections from the codeword
     uint8_t d5_4 = (codeword_24 & MASK24_4_5) >> 20;
@@ -53,7 +52,7 @@ uint32_t make_frame(uint32_t codeword_24) {
     return 0;
 }
 
-uint32_t frame_to_codeword24(uint32_t frame30) {
+scampCodeWord24_t frame_to_codeword24(scampFrame30_t frame30) {
     
     // Pull out the 4-bit sections from the frame
     uint8_t d5_4 = (frame30 & MASK30_4_5) >> 25;
@@ -71,7 +70,7 @@ uint32_t frame_to_codeword24(uint32_t frame30) {
            (d0_4);
 }
 
-int32_t correlate(uint32_t w0, uint32_t w1) {
+int32_t correlate(scampFrame30_t w0, scampFrame30_t w1) {
     int32_t result = 0;
     for (unsigned int i = 0; i < 30; i++) {
         int i0 = (w0 & 1) ? 1 : -1;
@@ -82,6 +81,5 @@ int32_t correlate(uint32_t w0, uint32_t w1) {
     }
     return result;
 }
-    }
 }
 

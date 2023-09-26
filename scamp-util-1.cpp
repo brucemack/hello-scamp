@@ -6,6 +6,7 @@
  */
 #include <iostream>
 #include <cstdint>
+#include "scamp-util-1.h"
 
 namespace kw4ti {
 
@@ -71,12 +72,12 @@ uint8_t golay_hamming_weight_16(uint16_t n)
  * wd_enc The data payload (12 bits)
  * @return The code word (24 bit)
  */
-uint32_t golay_encode(uint16_t wd_enc_12)
+scampCodeWord24_t golay_encode(scampCodeWord12_t wd_enc_12)
 {
     // Compute the parity for the data
-    uint16_t enc_12 = golay_mult(wd_enc_12);
+    scampCodeWord24_t parity = golay_mult(wd_enc_12);
     // Shift the 12 parity bits up to the MSB.  Data becomes LSB.
-    return (((uint32_t)enc_12) << 12) | wd_enc_12;
+    return (((scampCodeWord24_t)parity) << 12) | wd_enc_12;
 }
 
 /**
@@ -85,7 +86,7 @@ uint32_t golay_encode(uint16_t wd_enc_12)
  * @param biterrs The number of bit errors corrected.
  * @return The data payload (12 bits), or 0xffff if there are too many errors to correct.
  */
-uint16_t golay_decode(uint32_t codeword_24, uint8_t *biterrs)
+scampCodeWord12_t golay_decode(scampCodeWord24_t codeword_24, uint8_t *biterrs)
 {
     uint16_t enc = codeword_24 & 0xFFF;
     uint16_t parity = codeword_24 >> 12;

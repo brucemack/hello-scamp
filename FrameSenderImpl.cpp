@@ -17,7 +17,7 @@ namespace scamp {
         _radioEnabled(false),
         _sentFrameBits(0),
         _outQueueSize(0),
-        _idleFrame(kc1fsz::scamp::make_frame(kw4ti::golay_encode(0b000000000000))) {
+        _idleFrame(scamp::make_frame(kw4ti::golay_encode(0b000000000000))) {
     }
 
     void FrameSenderImpl::setRadio(Radio* radio) {
@@ -70,7 +70,7 @@ namespace scamp {
                          _state == State::SENDING_FRAME) {
                     // Anything pending?
                     if (_outQueueSize) {
-                        _workingFrame = kc1fsz::scamp::make_frame(kw4ti::golay_encode(_outQueue[0]));
+                        _workingFrame = scamp::make_frame(kw4ti::golay_encode(_outQueue[0]));
                         _sentFrameBits = 0;
                         _sendBit();
                         // Shift down the out queue
@@ -114,7 +114,7 @@ namespace scamp {
         _sentFrameBits++;
     }
 
-    void FrameSenderImpl::queue(uint16_t codeWord12) {
+    void FrameSenderImpl::queue(scampCodeWord12_t codeWord12) {
         if (_outQueueSize < FRAME_SENDER_QUEUE_SIZE) {
             _outQueue[_outQueueSize] = codeWord12;
             _outQueueSize++;

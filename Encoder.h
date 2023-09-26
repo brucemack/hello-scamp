@@ -2,15 +2,9 @@
 #define _Encoder_h
 
 #include <cinttypes>
+#include "FrameSender.h"
 
 namespace scamp {
-
-    class FrameSender {
-    public:
-
-        virtual bool canQueue() const = 0;
-        virtual void queue(uint16_t codeWord12) = 0;
-    };
 
     class Encoder {
     public:
