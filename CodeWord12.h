@@ -7,6 +7,11 @@
 
 namespace scamp {
 
+    /**
+     * A class used to represent the 12-bit SCAMP code word prior to the application
+     * of the Golay encoding.  The code word typically contains two text symbols,
+     * although there are other variations.
+     */
     class CodeWord12 {
     public:
 
@@ -15,6 +20,7 @@ namespace scamp {
         CodeWord12(uint16_t raw, bool valid);
         
         bool isValid() const;
+
         uint16_t getRaw() const;
 
         Symbol6 getSymbol0() const;

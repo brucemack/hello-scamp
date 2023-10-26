@@ -90,4 +90,33 @@ unsigned int Frame30::getComplimentCount() const {
     return result;
 }
 
+int32_t Frame30::correlate30(uint32_t w0, uint32_t w1) {
+    int32_t result = 0;
+    for (unsigned int i = 0; i < 30; i++) {
+        int i0 = (w0 & 1) ? 1 : -1;
+        int i1 = (w1 & 1) ? 1 : -1;
+        w0 = w0 >> 1;
+        w1 = w1 >> 1;
+        result += (i0 * i1);
+    }
+    return result;
+}
+
+CodeWord24 Frame30::toCodeWord24() const {   
+    // Pull out the 4-bit sections from the frame
+    uint8_t d5_4 = (_raw & MASK30_4_5) >> 25;
+    uint8_t d4_4 = (_raw & MASK30_4_4) >> 20;
+    uint8_t d3_4 = (_raw & MASK30_4_3) >> 15;
+    uint8_t d2_4 = (_raw & MASK30_4_2) >> 10;
+    uint8_t d1_4 = (_raw & MASK30_4_1) >> 5;
+    uint8_t d0_4 = (_raw & MASK30_4_0);
+    // Build the result
+    return CodeWord24((d5_4 << 20) |
+           (d4_4 << 16) |
+           (d3_4 << 12) |
+           (d2_4 << 8) |
+           (d1_4 << 4) |
+           (d0_4));
+}
+
 }

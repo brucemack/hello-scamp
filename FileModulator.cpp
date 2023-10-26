@@ -21,6 +21,13 @@ void FileModulator::sendSpace() {
     _send(_spaceFreq);
 }
 
+void FileModulator::sendSilence() { 
+    for (unsigned int i = 0; i < _symbolLength; i++) {
+        _str << (int)0 << "\n";
+    }
+    _str.flush();
+}
+
 void FileModulator::_send(unsigned int freq) {
 
     const float scale = 32760;

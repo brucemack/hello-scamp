@@ -12,6 +12,7 @@ namespace scamp {
         FileModulator(std::ostream& str, unsigned int sampleRate, unsigned int symbolLength, 
             unsigned int markFreq, unsigned int spaceFreq);
 
+        void sendSilence();
         void sendMark();
         void sendSpace();
 

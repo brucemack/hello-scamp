@@ -134,9 +134,10 @@ int main(int argc, const char** argv) {
         // This is SCAMP FSK SLOW
         FileModulator mod(outfile, 2000, 144, 667, 625);
 
-        // Send the synchronization frame
-        Frame30::ZERO_FRAME.transmit(mod);
+        for (unsigned int i = 0; i < 30; i++)
+            mod.sendSilence();
 
+        // Send the synchronization frame
         Frame30::SYNC_FRAME_0.transmit(mod);
         Frame30::SYNC_FRAME_1.transmit(mod);
 
@@ -181,7 +182,8 @@ int main(int argc, const char** argv) {
             frame.transmit(mod);
         }
 
-        Frame30::ZERO_FRAME.transmit(mod);
+        for (unsigned int i = 0; i < 30; i++)
+            mod.sendSilence();
 
         outfile.close();
     }

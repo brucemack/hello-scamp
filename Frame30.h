@@ -16,11 +16,18 @@ namespace scamp {
 
         static Frame30 fromCodeWord24(CodeWord24 cw);
 
+        /** 
+         * Correlates the first 30 LSB bits of the 32 bit number.
+         */
+        static int32_t correlate30(uint32_t a, uint32_t b);
+
         Frame30(uint32_t raw);
 
         uint32_t getRaw() const;
 
         bool isValid() const;
+
+        CodeWord24 toCodeWord24() const;
 
         /**
          * Returns the number of compliment sets.  Expected value is 6.
@@ -39,4 +46,3 @@ namespace scamp {
 }
 
 #endif
-
