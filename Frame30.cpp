@@ -52,9 +52,47 @@ Frame30 Frame30::fromCodeWord24(CodeWord24 cw) {
     return Frame30(raw);
 }
 
+Frame30 Frame30::fromTwoAsciiChars(char a, char b) {
+    Symbol6 sym0 = Symbol6::fromAscii(a);
+    Symbol6 sym1 = Symbol6::fromAscii(b);
+    CodeWord12 cw12 = CodeWord12::fromSymbols(sym0, sym1);
+    CodeWord24 cw24 = CodeWord24::fromCodeWord12(cw12);
+    return Frame30::fromCodeWord24(cw24);
+}
+
+/**
+ * Converts an array of tones to a 30-bit integer using the LSBs.
+ * The MSB is the first to be sent. a[0] is the first to be sent.
+ */
+uint32_t Frame30::arrayToInt32(uint8_t a[]) {
+    uint32_t result;
+    for (unsigned int i = 0; i < 30; i++) {
+        if (a[i] == 1) {
+            result = result | 1;
+        }
+        result <<= 1;
+    }
+    return result;
+}
+
+/**
+ * Utility function that decodes an array of marks/spaces
+ * an creates a frame.  The first tone received is in 
+ * the [0] location and the last tone received is in the 
+ * [29] location.
+ */
+Frame30 Frame30::decodeFromTones(uint8_t tones[]) {
+    return Frame30(arrayToInt32(tones));
+}
+
 Frame30 Frame30::ZERO_FRAME(0b000000000000000000000000000000);
 Frame30 Frame30::SYNC_FRAME_0(0b111111111111111111111111010101);
 Frame30 Frame30::SYNC_FRAME_1(0b111110110100011001110100011110);
+
+uint32_t Frame30::MASK30LSB = 0b00111111111111111111111111111111;
+
+Frame30::Frame30() 
+:   _raw(0) { }
 
 Frame30::Frame30(uint32_t raw) 
 :   _raw(raw) { }
@@ -74,6 +112,10 @@ void Frame30::transmit(Modulator& mod) {
         }
         work <<= 1;
     }
+}
+
+bool Frame30::isValid() const {
+    return getComplimentCount() == 6;
 }
 
 unsigned int Frame30::getComplimentCount() const {

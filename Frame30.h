@@ -9,6 +9,8 @@ namespace scamp {
     class Frame30 {
     public:
 
+        static uint32_t MASK30LSB;
+
         static Frame30 ZERO_FRAME;
         // Start of transmission frames, contains edges to synchronize with
         static Frame30 SYNC_FRAME_0;
@@ -16,15 +18,38 @@ namespace scamp {
 
         static Frame30 fromCodeWord24(CodeWord24 cw);
 
+        /**
+         * A convenience function that rolls together all of steps needed
+         * to create a SCAMP frame from two ASCII characters.
+         */
+        static Frame30 fromTwoAsciiChars(char a, char b);
+
         /** 
          * Correlates the first 30 LSB bits of the 32 bit number.
          */
         static int32_t correlate30(uint32_t a, uint32_t b);
 
+        /**
+         * MSB is the first to be sent.
+         */
+        static uint32_t arrayToInt32(uint8_t a[]);
+
+        /**
+         * Utility function that decodes an array of marks/spaces
+         * an creates a frame.  The first tone received is in 
+         * the [0] location and the last tone received is in the 
+         * [29] location.
+         */
+        static Frame30 decodeFromTones(uint8_t tones[]);
+
+        Frame30();
         Frame30(uint32_t raw);
 
         uint32_t getRaw() const;
 
+        /**
+         * Returns true if there are 6 valid compliments in the frame;
+         */
         bool isValid() const;
 
         CodeWord24 toCodeWord24() const;

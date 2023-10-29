@@ -20,4 +20,12 @@ uint16_t CodeWord12::getRaw() const {
     return _raw;
 }
 
+Symbol6 CodeWord12::getSymbol0() const {
+    return Symbol6(_raw & 0b111111);
+}
+
+Symbol6 CodeWord12::getSymbol1() const {
+    return Symbol6((_raw >> 6) & 0b111111);
+}
+
 }
