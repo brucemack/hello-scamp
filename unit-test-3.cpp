@@ -113,21 +113,6 @@ int main(int argc, const char** argv) {
         */
     }
 
-    /*
-    // Test file
-    {
-        std::ofstream outfile("./scamp-fsk-slow-demo-0.txt");
-        FileModulator mod(outfile, 2000, 144, 667, 625);
-
-        for (unsigned int i = 0; i < 20; i++) {
-            mod.sendMark();
-            mod.sendSpace();
-        }
-
-        outfile.close();
-    }
-    */
-
     // Make a message and modulate it
     {
         std::ofstream outfile("./scamp-fsk-slow-demo-0.txt");

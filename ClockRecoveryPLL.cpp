@@ -1,3 +1,19 @@
+/*
+SCAMP Encoder/Decoder
+Copyright (C) 2023 - Bruce MacKinnon KC1FSZ
+
+This program is free software: you can redistribute it and/or modify it under 
+the terms of the GNU General Public License as published by the Free 
+Software Foundation, either version 3 of the License, or (at your option) any 
+later version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT 
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS 
+FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with 
+this program. If not, see <https://www.gnu.org/licenses/>.
+*/
 #include <iostream>
 #include "ClockRecoveryPLL.h"
 
@@ -6,58 +22,74 @@ using namespace std;
 namespace scamp {
 
 ClockRecoveryPLL::ClockRecoveryPLL(unsigned int sampleRate) 
-:   _phi(0),
-    _deltaPhi(1),
-    _period(8),
-    _samplePending(false),
-    _integration(0) {
+:   _idle(true),
+    _sampleRate(sampleRate),
+    _phi(0),
+    // The target phase is 1/4 of the total range of uint16_t. We 
+    // choose this phase so that 1/2 of the total range will fall
+    // in the middle of a bit.
+    _targetPhi((1L << 16) / 4),
+    _omega(0),
+    _Kp(6),
+    _Ki(8),
+    // Bias is based on the expected frequency
+    // The initial bit frequency is set close to the SCAMP FSK rate
+    // of 33.3 bits per second, or 60 samples per bit on a 2,000 kHz
+    // sample clock.
+    _bias((1L << 16) / 60),
+    _integration(0),
+    _lastPhi(0),
+    _lastSample(false),
+    _lastError(0) {
+}
+
+void ClockRecoveryPLL::setBitFrequencyHint(unsigned int bitFrequency) {
+    // Determine samples per bit
+    uint16_t samplesPerBit = _sampleRate / bitFrequency;
+    // Adjust the bias 
+    _bias = (1L << 16) / samplesPerBit;
+}
+
+uint32_t ClockRecoveryPLL::getFrequency() const {   
+    return (_sampleRate * (_omega + _bias)) >> 16;
 }
 
 bool ClockRecoveryPLL::processSample(bool mark) {
 
-    int sample = (mark) ? 1 : -1;
-    //cout << "Sample: " << sample << ", DCO: " << _getDCOValue() << endl;
+    int sample = mark ? 1 : -1;
+    bool edge = false;
     
-    // Look for the edge
-    if (_lastMark != mark) {
-
-        _lastMark = mark;
-
-        // Deal with error integration
-        int error = (sample == _getDCOValue()) ? 1 : -1;
-        _integration -= error;
-
-        //cout << "  ERR=" << error << ", INT=" << _integration << endl;
-
-        // Speed up or slow down
-        _period += _integration;
-        if ((int)_period < 2) {
-            _period = 2;
-        }   
+    // Look for the edge.  Only on edges do we adjust the phase.
+    if (_lastSample != mark) {
+        _lastSample = mark;
+        edge = true;
+        // When coming in from idle, pretend like we are perfectly in sync to 
+        // avoid a huge initial error.
+        if (_idle) {
+            _phi = _targetPhi;
+            _idle = false;
+        }
+        _lastError = (int32_t)_targetPhi - (int32_t)_phi;
+        // PI controller
+        _integration += _lastError;
+        // NOTICE: We are right-shifting here, so the coefficients are 
+        // less than 1.0!
+        _omega = (_lastError >> _Kp) + (_integration >> _Ki);        
     }
 
-    // Advance the DCO
-    _phi += _deltaPhi;
-    // Process the wrap if needed
-    if (_phi >= _period) {
-        _phi = _phi % _period;
-        _samplePending = true;
-    }
+    // Keep rotating no matter what
+    _phi += _omega;
+    _phi += _bias;
 
-    if (_samplePending) {
-        _samplePending = false;
-        return true;
-    } else {
-        return false;
+    // Look for the rising edge of the two MSBs on _phi in order to 
+    // detect the 270 degree phase point.
+    bool phi270 = false;
+    if ((_phi & 0xC000) && !(_lastPhi & 0xC000)) {
+        phi270 = true;
     }
-}
+    _lastPhi = _phi;
 
-int ClockRecoveryPLL::_getDCOValue() const {
-    if (_phi > (_period >> 1)) {
-        return -1;
-    } else {
-        return 1;
-    }
+    return phi270;
 }
 
 }
