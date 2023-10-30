@@ -40,7 +40,8 @@ ClockRecoveryPLL::ClockRecoveryPLL(unsigned int sampleRate)
     _integration(0),
     _lastPhi(0),
     _lastSample(false),
-    _lastError(0) {
+    _lastError(0),
+    _samplesSinceEdge(0) {
 }
 
 void ClockRecoveryPLL::setBitFrequencyHint(unsigned int bitFrequency) {
@@ -60,8 +61,9 @@ bool ClockRecoveryPLL::processSample(bool mark) {
     bool edge = false;
     
     // Look for the edge.  Only on edges do we adjust the phase.
-    if (_lastSample != mark) {
+    if (_lastSample != mark) {        
         _lastSample = mark;
+        _samplesSinceEdge = 0;
         edge = true;
         // When coming in from idle, pretend like we are perfectly in sync to 
         // avoid a huge initial error.
@@ -69,6 +71,7 @@ bool ClockRecoveryPLL::processSample(bool mark) {
             _phi = _targetPhi;
             _idle = false;
         }
+        // Compute the phase error
         _lastError = (int32_t)_targetPhi - (int32_t)_phi;
         // PI controller
         _integration += _lastError;
@@ -80,16 +83,17 @@ bool ClockRecoveryPLL::processSample(bool mark) {
     // Keep rotating no matter what
     _phi += _omega;
     _phi += _bias;
+    _samplesSinceEdge++;
 
     // Look for the rising edge of the two MSBs on _phi in order to 
     // detect the 270 degree phase point.
-    bool phi270 = false;
+    bool phi180 = false;
     if ((_phi & 0x8000) && !(_lastPhi & 0x8000)) {
-        phi270 = true;
+        phi180 = true;
     }
     _lastPhi = _phi;
 
-    return phi270;
+    return phi180;
 }
 
 }

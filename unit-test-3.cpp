@@ -1,4 +1,19 @@
+/*
+SCAMP Encoder/Decoder
+Copyright (C) 2023 - Bruce MacKinnon KC1FSZ
 
+This program is free software: you can redistribute it and/or modify it under 
+the terms of the GNU General Public License as published by the Free 
+Software Foundation, either version 3 of the License, or (at your option) any 
+later version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT 
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS 
+FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with 
+this program. If not, see <https://www.gnu.org/licenses/>.
+*/
 #include <iostream>
 #include <fstream>
 #include <cmath>
@@ -328,37 +343,37 @@ int main(int argc, const char** argv) {
 
             for (unsigned int i = 0; i < modem.getSamplesUsed(); i++) {
 
+                // ##### DIAGNOSTIC DISPLAY
                 if (i % 60 == 0) {
                     cout << endl;
                     cout << setw(4) << (i / 60) << " [";
-                    cout << setw(6) << pll.getLastError() << "]: ";
+                    cout << setw(7) << pll.getLastError() << "]  [";
+                    cout << setw(5) << pll.getSamplesSinceEdge() << "]: ";
                     cout.copyfmt(init);
                 }
 
                 // Feed the clock recovery PLL
                 bool captureSample = pll.processSample(samples[i] == 1);
+                // ##### DIAGNOSTIC DISPLAY
                 cout << (samples[i] == 1);
                 // We only process a bit when the PLL tells us to
                 if (!captureSample) {
                     continue;
                 }
 
-                cout << "|";
-                //cout << "Bit sync " << i << ", error " << pll.getLastError() << endl;
+                // ##### DIAGNOSTIC DISPLAY
+                cout << "^";
 
                 // Bring in the next bit
                 accumulator <<= 1;
-                if (samples[i] == 1) {
-                    accumulator |= 1;
-                }
+                accumulator |= (samples[i] == 1) ? 1 : 0;
                 bitCount++;
                 
                 if (!inSync) {
                     // Look for sync frame
-                    if (Frame30::correlate30(accumulator, Frame30::SYNC_FRAME_1.getRaw()) > 29) {
+                    if (abs(Frame30::correlate30(accumulator, Frame30::SYNC_FRAME_1.getRaw())) > 29) {
                         inSync = true;
                         bitCount = 0;
-                        //cout << "Sync frame" << endl;
                     }
                 }
                 // Here we are consuming real frames
