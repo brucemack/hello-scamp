@@ -30,6 +30,11 @@ void TestModem::sendSilence() {
         _samples[_samplesUsed++] = 0;
 }
 
+void TestModem::sendHalfSilence() {
+    for (unsigned int i = 0; i < _samplesPerSymbol / 2; i++) 
+        _samples[_samplesUsed++] = 0;
+}
+
 void TestModem::sendMark() {
     for (unsigned int i = 0; i < _samplesPerSymbol; i++) 
         _samples[_samplesUsed++] = 1;

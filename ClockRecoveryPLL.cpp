@@ -32,11 +32,12 @@ ClockRecoveryPLL::ClockRecoveryPLL(unsigned int sampleRate)
     _omega(0),
     _Kp(7),
     _Ki(10),
-    // Bias is based on the expected frequency
+    // Offset is based on the expected frequency and reduces the 
+    // workload on the integrator.
     // The initial bit frequency is set close to the SCAMP FSK rate
     // of 33.3 bits per second, or 60 samples per bit on a 2,000 kHz
     // sample clock.
-    _bias((1L << 16) / 60),
+    _offset((1L << 16) / 60),
     _integration(0),
     _lastPhi(0),
     _lastSample(false),
@@ -47,12 +48,12 @@ ClockRecoveryPLL::ClockRecoveryPLL(unsigned int sampleRate)
 void ClockRecoveryPLL::setBitFrequencyHint(unsigned int bitFrequency) {
     // Determine samples per bit
     uint16_t samplesPerBit = _sampleRate / bitFrequency;
-    // Adjust the bias 
-    _bias = (1L << 16) / samplesPerBit;
+    // Adjust the offset 
+    _offset = (1L << 16) / samplesPerBit;
 }
 
 uint32_t ClockRecoveryPLL::getFrequency() const {   
-    return (_sampleRate * (_omega + _bias)) >> 16;
+    return (_sampleRate * (_omega + _offset)) >> 16;
 }
 
 bool ClockRecoveryPLL::processSample(bool mark) {
@@ -82,7 +83,7 @@ bool ClockRecoveryPLL::processSample(bool mark) {
 
     // Keep rotating no matter what
     _phi += _omega;
-    _phi += _bias;
+    _phi += _offset;
     _samplesSinceEdge++;
 
     // Look for the rising edge of the two MSBs on _phi in order to 

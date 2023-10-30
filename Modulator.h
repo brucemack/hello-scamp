@@ -27,6 +27,13 @@ namespace scamp {
     public:
 
         virtual void sendSilence() { }
+
+        /**
+         * Sends a silence for half of a symbol period. Useful for 
+         * synchronization testing
+         */
+        virtual void sendHalfSilence() { }
+
         virtual void sendMark() = 0;
         virtual void sendSpace() = 0;
     };

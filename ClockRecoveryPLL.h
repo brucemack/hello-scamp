@@ -75,7 +75,7 @@ namespace scamp {
         uint16_t _targetPhi;
         int16_t _Kp;
         int16_t _Ki;
-        int16_t _bias;
+        int16_t _offset;
         int32_t _lastError;
         uint16_t _lastPhi;
         bool _lastSample;

@@ -28,6 +28,7 @@ public:
     TestModem(int8_t* samples, unsigned int tonesSize, unsigned int samplesPerSymbol);
 
     virtual void sendSilence();
+    virtual void sendHalfSilence();
     virtual void sendMark();
     virtual void sendSpace();
 

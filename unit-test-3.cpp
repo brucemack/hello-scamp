@@ -312,7 +312,10 @@ int main(int argc, const char** argv) {
             Frame30 frames[32];
             unsigned int count = encodeString(testMessage, frames, 32, true);
 
-            // Send some silence (not a full frame)
+            // Send some silence (not a full frame).  
+            // We purposely offset the data stream by a half symbol 
+            // to stress the PLL.
+            //modem.sendHalfSilence();
             modem.sendSilence();
             modem.sendSilence();
             modem.sendSilence();
