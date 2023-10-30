@@ -4,6 +4,8 @@
 #include <cmath>
 #include <cassert>
 #include <sstream>
+#include <string>
+#include <iomanip>    
 
 #include "Util.h"
 #include "Symbol6.h"
@@ -11,6 +13,7 @@
 #include "Frame30.h"
 #include "FileModulator.h"
 #include "TestModem.h"
+#include "ClockRecoveryPLL.h"
 
 using namespace std;
 using namespace scamp;
@@ -116,7 +119,9 @@ int main(int argc, const char** argv) {
         */
     }
 
-    // Make a message and modulate it
+    // =========================================================================
+    // Make a message and modulate it into a file. This demonstration is used
+    // for creating .WAV files.
     {
         std::ofstream outfile("./scamp-fsk-slow-demo-0.txt");
         // This is SCAMP FSK SLOW
@@ -176,6 +181,7 @@ int main(int argc, const char** argv) {
         outfile.close();
     }
 
+    // =========================================================================
     // Encoding tests
     {        
         std::function<void(char a, char b)> f2 = [](char a, char b) {  
@@ -188,19 +194,22 @@ int main(int argc, const char** argv) {
         assertm(b.getRaw() == 0xaa, "Default assignment");
     }
 
-    // Make a message and then recover it
+    // =========================================================================
+    // Make a message, encode it, and then recover it. This test assumes one 
+    // sample per symbol so there is no bit clock synchronization going on here. 
+    // We are just testing the ability to recognize the synchronization frame.
     {        
         const char* testMessage = "DE KC1FSZ, GOOD MORNING";
 
         // Make enough room to capture the tones
         int8_t samples[1024];
-        TestModem modem(samples, 1024, 1);
+        TestModem modem(samples, sizeof(samples), 1);
 
         {
             // Make the message
             Frame30 frames[32];
             unsigned int count = encodeString(testMessage, frames, 32, true);
-            assertm(count == 14, "Frame count");
+            assertm(count == 14, "Frame count problem");
 
             // Send some silence and other garbage at the beginning
             modem.sendSilence();
@@ -266,6 +275,115 @@ int main(int argc, const char** argv) {
                 }
             }
         }
+
+        // Validate the recovered message
+        assertm(outStream.str() == testMessage, "Message error");
+    }
+
+    // =========================================================================
+    // Make a message, encode it, and then recover it. In this test we are 
+    // using the SCAMP FSK (33.3 bits per second) format.  The clock recovery
+    // PLL is used to enable synchronization of the bit stream.
+    {        
+        const char* testMessage = "DE KC1FSZ, GOOD MORNING";
+
+        // Make enough room to capture the tones
+        int8_t samples[60 * 1024];
+        // The 60 means 60 samples per symbol - consistent with 33.3 symbols/second
+        TestModem modem(samples, sizeof(samples), 60);
+
+        // Encode the message.  This leads to about 25K samples.
+        {
+            Frame30 frames[32];
+            unsigned int count = encodeString(testMessage, frames, 32, true);
+
+            // Send some silence (not a full frame)
+            modem.sendSilence();
+            modem.sendSilence();
+            modem.sendSilence();
+            modem.sendSilence();
+            modem.sendSilence();
+            modem.sendSilence();
+            modem.sendSilence();
+
+            // Transmit a legit message
+            for (unsigned int i = 0; i < count; i++) {
+                frames[i].transmit(modem);
+            }
+        }
+
+        // Now decode
+        ostringstream outStream;
+        {
+            ClockRecoveryPLL pll(2000);
+            // Purposely set for the wrong frequency to watch the clock 
+            // recovery work. But it's close.
+            pll.setBitFrequencyHint(36);
+           
+            uint32_t accumulator = 0;
+            bool inSync = false;
+            unsigned int bitCount = 0;
+            ios init(NULL);
+            init.copyfmt(cout);
+
+            for (unsigned int i = 0; i < modem.getSamplesUsed(); i++) {
+
+                if (i % 60 == 0) {
+                    cout << endl;
+                    cout << setw(4) << (i / 60) << " [";
+                    cout << setw(6) << pll.getLastError() << "]: ";
+                    cout.copyfmt(init);
+                }
+
+                // Feed the clock recovery PLL
+                bool captureSample = pll.processSample(samples[i] == 1);
+                cout << (samples[i] == 1);
+                // We only process a bit when the PLL tells us to
+                if (!captureSample) {
+                    continue;
+                }
+
+                cout << "|";
+                //cout << "Bit sync " << i << ", error " << pll.getLastError() << endl;
+
+                // Bring in the next bit
+                accumulator <<= 1;
+                if (samples[i] == 1) {
+                    accumulator |= 1;
+                }
+                bitCount++;
+                
+                if (!inSync) {
+                    // Look for sync frame
+                    if (Frame30::correlate30(accumulator, Frame30::SYNC_FRAME_1.getRaw()) > 29) {
+                        inSync = true;
+                        bitCount = 0;
+                        //cout << "Sync frame" << endl;
+                    }
+                }
+                // Here we are consuming real frames
+                else {
+                    if (bitCount == 30) {
+                        bitCount = 0;
+                        Frame30 frame(accumulator & Frame30::MASK30LSB);
+                        if (!frame.isValid()) {                                            
+                            cout << endl << "WARNING: Invalid frame" << endl;
+                        } 
+                        CodeWord24 cw24 = frame.toCodeWord24();
+                        CodeWord12 cw12 = cw24.toCodeWord12();
+                        Symbol6 sym0 = cw12.getSymbol0();
+                        Symbol6 sym1 = cw12.getSymbol1();
+                        if (sym0.getRaw() != 0) {
+                            outStream << sym0.toAscii();
+                        }
+                        if (sym1.getRaw() != 0) {
+                            outStream << sym1.toAscii();
+                        }
+                    }
+                }
+            }
+        }
+        cout.flush();
 
         // Validate the recovered message
         assertm(outStream.str() == testMessage, "Message error");

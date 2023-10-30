@@ -15,6 +15,8 @@ namespace scamp {
         // Start of transmission frames, contains edges to synchronize with
         static Frame30 SYNC_FRAME_0;
         static Frame30 SYNC_FRAME_1;
+        // NOTE: NOT A VALID FRAME - JUST USED FOR SYNC TESTING
+        static Frame30 ALT_FRAME;
 
         static Frame30 fromCodeWord24(CodeWord24 cw);
 

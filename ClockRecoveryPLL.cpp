@@ -30,8 +30,8 @@ ClockRecoveryPLL::ClockRecoveryPLL(unsigned int sampleRate)
     // in the middle of a bit.
     _targetPhi((1L << 16) / 4),
     _omega(0),
-    _Kp(6),
-    _Ki(8),
+    _Kp(7),
+    _Ki(10),
     // Bias is based on the expected frequency
     // The initial bit frequency is set close to the SCAMP FSK rate
     // of 33.3 bits per second, or 60 samples per bit on a 2,000 kHz
@@ -84,7 +84,7 @@ bool ClockRecoveryPLL::processSample(bool mark) {
     // Look for the rising edge of the two MSBs on _phi in order to 
     // detect the 270 degree phase point.
     bool phi270 = false;
-    if ((_phi & 0xC000) && !(_lastPhi & 0xC000)) {
+    if ((_phi & 0x8000) && !(_lastPhi & 0x8000)) {
         phi270 = true;
     }
     _lastPhi = _phi;
