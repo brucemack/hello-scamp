@@ -138,7 +138,7 @@ int main(int argc, const char** argv) {
     // Make a message and modulate it into a file. This demonstration is used
     // for creating .WAV files.
     {
-        std::ofstream outfile("./scamp-fsk-slow-demo-0.txt");
+        std::ofstream outfile("bin/scamp-fsk-slow-demo-0.txt");
         // This is SCAMP FSK SLOW
         FileModulator mod(outfile, 2000, 144, 667, 625);
 
