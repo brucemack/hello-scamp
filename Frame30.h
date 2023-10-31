@@ -22,18 +22,29 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 namespace scamp {
 
+    /**
+     * Class represents a 30 bit SCAMP frame. Our goal is to use 
+     * strongly-typed concepts and to minimize the use of 
+     * typedefs and ad-hoc integers.
+    */
     class Frame30 {
     public:
 
         static uint32_t MASK30LSB;
 
+        // Start of transmission frame, contains edges to synchronize with
+        static Frame30 START_FRAME;
+        // Sync frame 
+        static Frame30 SYNC_FRAME;
+        // NOTE: NOT A VALID FRAME - JUST USED FOR SYNC TESTING
         static Frame30 ZERO_FRAME;
-        // Start of transmission frames, contains edges to synchronize with
-        static Frame30 SYNC_FRAME_0;
-        static Frame30 SYNC_FRAME_1;
         // NOTE: NOT A VALID FRAME - JUST USED FOR SYNC TESTING
         static Frame30 ALT_FRAME;
 
+        /**
+         * Converts a CodeWord24 into a complete frame by adding 
+         * the compliment bits.
+         */
         static Frame30 fromCodeWord24(CodeWord24 cw);
 
         /**
@@ -54,7 +65,7 @@ namespace scamp {
 
         /**
          * Utility function that decodes an array of marks/spaces
-         * an creates a frame.  The first tone received is in 
+         * an creates a frame. The first tone received is in 
          * the [0] location and the last tone received is in the 
          * [29] location.
          */
@@ -70,6 +81,9 @@ namespace scamp {
          */
         bool isValid() const;
 
+        /**
+         * Extracts the 24 bit code-word from a frame.
+         */
         CodeWord24 toCodeWord24() const;
 
         /**

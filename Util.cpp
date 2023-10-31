@@ -42,10 +42,10 @@ unsigned int encodeString(const char* in, Frame30* outList, unsigned int outList
 
     if (includeSyncFrame) {
         if (used < outListSize) {
-            outList[used++] = Frame30::SYNC_FRAME_0;
+            outList[used++] = Frame30::START_FRAME;
         }
         if (used < outListSize) {
-            outList[used++] = Frame30::SYNC_FRAME_1;
+            outList[used++] = Frame30::SYNC_FRAME;
         }
     }
 

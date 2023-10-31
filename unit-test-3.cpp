@@ -146,8 +146,8 @@ int main(int argc, const char** argv) {
             mod.sendSilence();
 
         // Send the synchronization frame
-        Frame30::SYNC_FRAME_0.transmit(mod);
-        Frame30::SYNC_FRAME_1.transmit(mod);
+        Frame30::START_FRAME.transmit(mod);
+        Frame30::SYNC_FRAME.transmit(mod);
 
         {
             Symbol6 s0 = Symbol6::fromAscii('D');
@@ -263,7 +263,7 @@ int main(int argc, const char** argv) {
                 
                 if (!inSync) {
                     // Look for sync frame
-                    if (Frame30::correlate30(accumulator, Frame30::SYNC_FRAME_1.getRaw()) > 29) {
+                    if (Frame30::correlate30(accumulator, Frame30::SYNC_FRAME.getRaw()) > 29) {
                         inSync = true;
                         bitCount = 0;
                     }
@@ -374,7 +374,7 @@ int main(int argc, const char** argv) {
                 
                 if (!inSync) {
                     // Look for sync frame
-                    if (abs(Frame30::correlate30(accumulator, Frame30::SYNC_FRAME_1.getRaw())) > 29) {
+                    if (abs(Frame30::correlate30(accumulator, Frame30::SYNC_FRAME.getRaw())) > 29) {
                         inSync = true;
                         bitCount = 0;
                     }
