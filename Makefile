@@ -1,3 +1,6 @@
+unit-test-1: unit-test-1.o 
+		g++ -o $@ $^
+
 unit-test-2: unit-test-2.o ClockRecoveryPLL.o
 		g++ -o $@ $^
 
