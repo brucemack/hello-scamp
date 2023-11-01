@@ -11,23 +11,17 @@ const float TWOPI = 2.0f * PI;
 
 namespace scamp {
 
-void simple_fft(complex<float> *input, complex<float> *output, int N, int step)
-{
-  if (step < N) 
-  {
-    // Recursive Functionality 
-    simple_fft(output, input, N, step * 2);
-    simple_fft(output + step, input + step, N, step * 2);
-    
-    // For loop for k cycles
-    for (int k = 0; k < N; k += 2 * step)
-    {
-      float angle = -PI * k / N;
-      float realPart, imagPart;      
+static void simple_fft_recursive(complex<float> *input, complex<float> *output, int N, int step) {
+  if (step < N) {
 
-      // Calculating the Complex Sum
-      realPart = output[k + step].real() * cos(angle) - output[k + step].imag() * sin(angle);
-      imagPart = output[k + step].real() * sin(angle) + output[k + step].imag() * cos(angle);
+    simple_fft_recursive(output, input, N, step * 2);
+    simple_fft_recursive(output + step, input + step, N, step * 2);
+    
+    for (int k = 0; k < N; k += 2 * step) {
+
+      float angle = -PI * k / N;      
+      float realPart = output[k + step].real() * cos(angle) - output[k + step].imag() * sin(angle);
+      float imagPart = output[k + step].real() * sin(angle) + output[k + step].imag() * cos(angle);
 
       complex<float> out(realPart, imagPart);
 
@@ -36,5 +30,10 @@ void simple_fft(complex<float> *input, complex<float> *output, int N, int step)
     }
   }
 }
+
+void simple_fft(complex<float>* input, complex<float>* output, int N) {
+    simple_fft_recursive(input, output, N, 1);
+}
+
 
 } // namespace

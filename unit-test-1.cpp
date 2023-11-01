@@ -22,8 +22,8 @@ ostream &operator<<(ostream &out, complex<float> c)
   return out;
 }
 
-int main(int argc, char *argv[]) 
-{
+int main(int argc, char *argv[]) {
+
     int N = 8;
     complex<float> buffer[8];
     complex<float> outputs[8];
@@ -39,17 +39,13 @@ int main(int argc, char *argv[])
 
     cout << setprecision(4);
 
-    for (int i = 0; i < N; i++)
-    {
+    for (int i = 0; i < N; i++) {
         outputs[i] = buffer[i];
     }
 
-    // Calculate FFT
-    simple_fft(buffer, outputs, N, 1);
+    simple_fft(buffer, outputs, N);
 
-    // Print out the output
-    for (int i = 0; i < N; i++)
-    {
+    for (int i = 0; i < N; i++) {
         std::cout << buffer[i] << "  " << std::abs(buffer[i]) << std::endl;
     }
 
