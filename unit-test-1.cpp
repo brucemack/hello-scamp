@@ -59,6 +59,9 @@ void make_tone(complex<float>* output, unsigned int len, float sample_freq_hz,
   }
 }
 
+/** 
+ * A single signal that mixes two tones.
+ */
 static void test_2() {
 
   const unsigned int N = 8;
@@ -86,7 +89,32 @@ static void test_2() {
   }
 }
 
-int main(int argc, char *argv[]) {
-  test_2();
+/** 
+ * A single signal that concatenates two tones.
+ */
+static void test_3() {
+
+  const unsigned int N = 16;
+  complex<float> inputs[N];
+  complex<float> outputs[N];
+
+  // Make two tones
+  make_tone(inputs, N / 2, 2000.0, 500.0, 0.5);
+  make_tone(inputs + N, N / 2, 2000.0, 250.0, 0.5);
+  
+  for (unsigned int i = 0; i < N; i++) {
+    outputs[i] = inputs[i];
+  }
+
+  simple_fft(inputs, outputs, N);
+
+  cout << setprecision(2);
+
+  for (int i = 0; i < N; i++) {
+      std::cout << std::abs(inputs[i]) << std::endl;
+  }
 }
 
+int main(int argc, char *argv[]) {
+  test_3();
+}
