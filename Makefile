@@ -9,7 +9,7 @@ test:	bin/unit-test-1 bin/unit-test-2 bin/unit-test-3
 	bin/unit-test-2
 	bin/unit-test-3
 
-bin/unit-test-1: build/unit-test-1.o 
+bin/unit-test-1: build/unit-test-1.o build/SimpleFFT.o
 	$(MD) -p bin
 	g++ -o $@ $^
 
