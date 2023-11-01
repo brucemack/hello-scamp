@@ -22,8 +22,7 @@ ostream &operator<<(ostream &out, complex<float> c)
   return out;
 }
 
-int main(int argc, char *argv[]) {
-
+static void test_1() {
     int N = 8;
     complex<float> buffer[8];
     complex<float> outputs[8];
@@ -48,6 +47,46 @@ int main(int argc, char *argv[]) {
     for (int i = 0; i < N; i++) {
         std::cout << buffer[i] << "  " << std::abs(buffer[i]) << std::endl;
     }
-
-    return 0;
 }
+
+void make_tone(complex<float>* output, unsigned int len, float sample_freq_hz, 
+  float tone_freq_hz, float amplitude) {
+  float phi = 0;
+  float omega = 2.0f * 3.1415926f * (tone_freq_hz / sample_freq_hz);
+  for (unsigned int i = 0; i < len; i++) {
+    output[i] = complex<float>(std::cos(phi) * amplitude);
+    phi += omega;
+  }
+}
+
+static void test_2() {
+
+  const unsigned int N = 8;
+  complex<float> inputs_0[N];
+  complex<float> inputs_1[N];
+  complex<float> inputs[N];
+  complex<float> outputs[N];
+
+  // Make two tones
+  make_tone(inputs_0, N, 2000.0, 250.0, 0.5);
+  make_tone(inputs_1, N, 2000.0, 500.0, 0.5);
+  
+  // Mix
+  for (unsigned int i = 0; i < N; i++) {
+    inputs[i] = inputs_0[i] + inputs_1[i];
+    outputs[i] = inputs[i];
+  }
+
+  simple_fft(inputs, outputs, N);
+
+  cout << setprecision(2);
+
+  for (int i = 0; i < N; i++) {
+      std::cout << std::abs(inputs[i]) << std::endl;
+  }
+}
+
+int main(int argc, char *argv[]) {
+  test_2();
+}
+
