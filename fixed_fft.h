@@ -44,7 +44,7 @@ public:
     /**
      * Performs the FFT in-place. Meaning: the input series is overwritten.
      */
-    void transform(complex_q15 f[]) const {
+    void transform(cq15 f[]) const {
 
         // One of the indices being swapped    
         uint16_t m;   

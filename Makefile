@@ -26,7 +26,7 @@ bin/unit-test-4: build/unit-test-4.o
 bin/unit-test-5: build/unit-test-5.o 
 	g++ -o $@ -L/usr/local/lib $^ 
 
-bin/unit-test-6: build/unit-test-6.o
+bin/unit-test-6: build/unit-test-6.o build/fixed_math.o
 	g++ -o $@ -L/usr/local/lib $^ 
 
 build/%.o:	%.cpp

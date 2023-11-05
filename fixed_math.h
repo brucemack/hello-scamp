@@ -18,6 +18,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #define _fixed_math_h
 
 #include <cstdint>
+#include <cmath>
 
 typedef int16_t q15;
 
@@ -32,7 +33,7 @@ typedef int16_t q15;
 #define q15_to_int(a) ((int)(a >> 15))
 #define char_to_q15(a) (q15)(((q15)(a)) << 15)
 
-struct complex_q15 {
+struct cq15 {
 
     q15 r;
     q15 i;
@@ -42,6 +43,27 @@ struct complex_q15 {
         float imf = q15_to_f32(i);
         return std::sqrt(ref * ref + imf * imf);
     }
+
+    /**
+     * Returns the index with the maximum magnitude.
+     */
+    static uint16_t max_idx(cq15* sample, uint16_t len) {
+        float max_mag = 0;
+        unsigned int max_bin = 0;
+        for (unsigned int i = 0; i < len; i++) {
+            float m = sample[i].mag_f32();
+            if (m > max_mag) {
+                max_mag = m;
+                max_bin = i;
+            }
+        }
+        return max_bin;
+    }
 };
+
+/**
+ * Correlates the real part of two series.
+*/
+q15 corr_q15(q15* d0, q15* d1, uint16_t len);
 
 #endif
