@@ -21,16 +21,13 @@ bin/unit-test-3: build/unit-test-3.o build/Symbol6.o build/CodeWord12.o build/Co
 	g++ -o $@ $^
 
 bin/unit-test-4: build/unit-test-4.o 
-	g++ -o $@ -L/usr/local/lib $^ -lkissfft-float 
-
-bin/unit-test-4f: build/unit-test-4f.o 
-	g++ -o $@ -L/usr/local/lib $^ -lkissfft-int16_t 
+	g++ -o $@ -L/usr/local/lib $^ 
 
 bin/unit-test-5: build/unit-test-5.o 
-	g++ -o $@ -L/usr/local/lib $^ -lfixmath 
+	g++ -o $@ -L/usr/local/lib $^ 
 
 bin/unit-test-6: build/unit-test-6.o
-	g++ -o $@ $^ 
+	g++ -o $@ -L/usr/local/lib $^ 
 
 build/%.o:	%.cpp
 	g++ -std=c++11 -g -c $^ -o $@

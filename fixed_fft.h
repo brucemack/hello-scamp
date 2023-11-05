@@ -32,11 +32,11 @@ Tom Roberts, and Malcolm Slaney (malcolm@interval.com).
  * The goal is to create a straight-forward implementation that can 
  * be built on a desktop or embedded platforms.
  */
-template<unsigned int N> class FixedFFT {
+template<uint16_t N> class FixedFFT {
 public:
 
     FixedFFT() {
-        for (unsigned int i = 0; i < N; i++) {
+        for (uint16_t i = 0; i < N; i++) {
             _cosTable[i] = f32_to_q15(std::sin(TWO_PI * ((float) i) / (float)N));
         }
     }
@@ -59,7 +59,7 @@ public:
         int16_t k;    
         
         // Length of the FFT which results from combining two FFT's
-        int16_t istep; 
+        int16_t iStep; 
         
         // -----------------------------------------------------------------------
         // The bit-reversal phase of the algorithm, based on this:
@@ -101,7 +101,7 @@ public:
         // of gathered samples:
         while (L < N) {
             // Determine the length of the FFT which will result from combining two FFT's
-            istep = L << 1;
+            iStep = L << 1;
             // For each element in the FFT's that are being combined
             for (m = 0; m < L; ++m) { 
                 // Lookup the trig values for that element
@@ -115,7 +115,7 @@ public:
                 // Divide by two
                 wi >>= 1;
                 // i gets the index of one of the FFT elements being combined
-                for (i = m; i < N; i += istep) {
+                for (i = m; i < N; i += iStep) {
                     // j gets the index of the FFT element being combined with i
                     j = i + L;
                     // Compute the trig terms (bottom half of the above matrix)
@@ -132,7 +132,7 @@ public:
                 }    
             }
             --k;
-            L = istep;
+            L = iStep;
         }
     }
 
