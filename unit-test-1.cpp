@@ -29,33 +29,6 @@ ostream &operator<<(ostream &out, complex<float> c)
   return out;
 }
 
-static void test_1() {
-    int N = 8;
-    complex<float> buffer[8];
-    complex<float> outputs[8];
-
-    buffer[0] = complex<float>(1, 0);
-    buffer[1] = complex<float>(0, 0);
-    buffer[2] = complex<float>(1, 0);
-    buffer[3] = complex<float>(0, 0);
-    buffer[4] = complex<float>(1, 0);
-    buffer[5] = complex<float>(0, 0);
-    buffer[6] = complex<float>(1, 0);
-    buffer[7] = complex<float>(0, 0);
-
-    cout << setprecision(4);
-
-    for (int i = 0; i < N; i++) {
-        outputs[i] = buffer[i];
-    }
-
-    simple_fft(buffer, outputs, N);
-
-    for (int i = 0; i < N; i++) {
-        std::cout << buffer[i] << "  " << std::abs(buffer[i]) << std::endl;
-    }
-}
-
 void make_tone(complex<float>* output, unsigned int len, float sample_freq_hz, 
   float tone_freq_hz, float amplitude) {
   float phi = 0;
@@ -76,6 +49,35 @@ unsigned int max_mag_bin(complex<float>* output, unsigned int len) {
         }
     }
     return max_bin;
+}
+
+static void test_1() {
+
+    int N = 8;
+    complex<float> buffer[8];
+    complex<float> outputs[8];
+
+    // Notice that this waveform will have a DC term 
+    buffer[0] = complex<float>(1, 0);
+    buffer[1] = complex<float>(0, 0);
+    buffer[2] = complex<float>(1, 0);
+    buffer[3] = complex<float>(0, 0);
+    buffer[4] = complex<float>(1, 0);
+    buffer[5] = complex<float>(0, 0);
+    buffer[6] = complex<float>(1, 0);
+    buffer[7] = complex<float>(0, 0);
+
+    cout << setprecision(4);
+
+    for (int i = 0; i < N; i++) {
+        outputs[i] = buffer[i];
+    }
+
+    simple_fft(buffer, outputs, N);
+
+    for (int i = 0; i < N; i++) {
+        std::cout << buffer[i] << "  " << std::abs(buffer[i]) << std::endl;
+    }
 }
 
 /** 
@@ -266,5 +268,5 @@ static void test_6() {
 }
 
 int main(int argc, char *argv[]) {
-  test_6();
+  test_1();
 }

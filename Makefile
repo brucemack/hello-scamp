@@ -20,8 +20,23 @@ bin/unit-test-3: build/unit-test-3.o build/Symbol6.o build/CodeWord12.o build/Co
 	build/Frame30.o build/FileModulator.o build/Util.o build/TestModem.o build/ClockRecoveryPLL.o
 	g++ -o $@ $^
 
+bin/unit-test-4: build/unit-test-4.o 
+	g++ -o $@ -L/usr/local/lib $^ -lkissfft-float 
+
+bin/unit-test-4f: build/unit-test-4f.o 
+	g++ -o $@ -L/usr/local/lib $^ -lkissfft-int16_t 
+
+bin/unit-test-5: build/unit-test-5.o 
+	g++ -o $@ -L/usr/local/lib $^ -lfixmath 
+
+bin/unit-test-6: build/unit-test-6.o
+	g++ -o $@ $^ 
+
 build/%.o:	%.cpp
 	g++ -std=c++11 -g -c $^ -o $@
+
+setup:
+	mkdir -p build bin
 
 clean:
 	$(RM) -rf build bin
