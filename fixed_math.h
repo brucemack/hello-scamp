@@ -21,20 +21,27 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 typedef int16_t q15;
 
-struct complex_q15 {
-    q15 r;
-    q15 i;
-};
-
 // For multiplication we use a 32-bit result to avoid loss of the fraction
 #define mult_q15(a,b) ( (q15)((((int32_t)(a)) * ((int32_t)(b))) >> 15) )
 
 #define abs_q15(a) abs(a) 
 
-#define q15_to_float(a) ((float)(a) / 32768.0)
-#define float_to_q15(a) ((q15)((a) * 32768.0)) 
+#define q15_to_f32(a) ((float)(a) / 32768.0)
+#define f32_to_q15(a) ((q15)((a) * 32768.0)) 
 #define int_to_q15(a) ((q15)(a << 15))
 #define q15_to_int(a) ((int)(a >> 15))
 #define char_to_q15(a) (q15)(((q15)(a)) << 15)
+
+struct complex_q15 {
+
+    q15 r;
+    q15 i;
+    
+    float mag_f32() const {
+        float ref = q15_to_f32(r);
+        float imf = q15_to_f32(i);
+        return std::sqrt(ref * ref + imf * imf);
+    }
+};
 
 #endif

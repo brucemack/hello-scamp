@@ -37,14 +37,14 @@ public:
 
     FixedFFT() {
         for (unsigned int i = 0; i < N; i++) {
-            _cosTable[i] = float_to_q15(std::sin(TWO_PI * ((float) i) / (float)N));
+            _cosTable[i] = f32_to_q15(std::sin(TWO_PI * ((float) i) / (float)N));
         }
     }
 
     /**
      * Performs the FFT in-place. Meaning: the input series is overwritten.
      */
-    void transform(q15 fr[], q15 fi[]) const {
+    void transform(complex_q15 f[]) const {
 
         // One of the indices being swapped    
         uint16_t m;   
@@ -78,13 +78,15 @@ public:
             mr >>= _shiftAmount;
             // Don't swap that which has already been swapped
             if (mr <= m) continue;
+
             // Swap the bit-reversed indices
-            tr = fr[m];
-            fr[m] = fr[mr];
-            fr[mr] = tr;
-            ti = fi[m];
-            fi[m] = fi[mr];
-            fi[mr] = ti;
+            tr = f[m].r;
+            f[m].r = f[mr].r;
+            f[mr].r = tr;
+
+            ti = f[m].i;
+            f[m].i = f[mr].i;
+            f[mr].i = ti;
         }
 
         // -----------------------------------------------------------------------
@@ -117,16 +119,16 @@ public:
                     // j gets the index of the FFT element being combined with i
                     j = i + L;
                     // Compute the trig terms (bottom half of the above matrix)
-                    tr = mult_q15(wr, fr[j]) - mult_q15(wi, fi[j]);
-                    ti = mult_q15(wr, fi[j]) + mult_q15(wi, fr[j]);
+                    tr = mult_q15(wr, f[j].r) - mult_q15(wi, f[j].i);
+                    ti = mult_q15(wr, f[j].i) + mult_q15(wi, f[j].r);
                     // Divide ith index elements by two (top half of above matrix)
-                    q15 qr = fr[i] >> 1;
-                    q15 qi = fi[i] >> 1;
+                    q15 qr = f[i].r >> 1;
+                    q15 qi = f[i].i >> 1;
                     // Compute the new values at each index
-                    fr[j] = qr - tr;
-                    fi[j] = qi - ti;
-                    fr[i] = qr + tr;
-                    fi[i] = qi + ti;
+                    f[j].r = qr - tr;
+                    f[j].i = qi - ti;
+                    f[i].r = qr + tr;
+                    f[i].i = qi + ti;
                 }    
             }
             --k;

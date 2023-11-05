@@ -15,36 +15,30 @@ using namespace std;
 
 const float PI = 3.1415926f;
 
-void make_tone(q15* output_r, q15* output_i, 
+void make_tone(complex_q15* output, 
   unsigned int len, float sample_freq_hz, 
   float tone_freq_hz, float amplitude) {
   float phi = 0;
   float omega = 2.0f * PI * (tone_freq_hz / sample_freq_hz);
   for (unsigned int i = 0; i < len; i++) {
     float sig = std::cos(phi) * amplitude;
-    output_r[i] = float_to_q15(sig);
-    output_i[i] = 0;
+    output[i].r = f32_to_q15(sig);
+    output[i].i = 0;
     phi += omega;
   }
 }
 
-float mag(q15 r, q15 i) {
-    float ref = q15_to_float(r);
-    float imf = q15_to_float(i);
-    return std::sqrt(ref * ref + imf * imf);
-}
-
 float ang(q15 r, q15 i) {
-    float ref = q15_to_float(r);
-    float imf = q15_to_float(i);
+    float ref = q15_to_f32(r);
+    float imf = q15_to_f32(i);
     return std::atan2(ref, imf);
 }
 
-unsigned int max_bin(q15* sample_r, q15* sample_i, unsigned int len) {
+unsigned int max_bin(complex_q15* sample, unsigned int len) {
     float max_mag = 0;
     unsigned int max_bin = 0;
     for (unsigned int i = 0; i < len; i++) {
-        float m = mag(sample_r[i], sample_i[i]);
+        float m = sample[i].mag_f32();
         if (m > max_mag) {
             max_mag = m;
             max_bin = i;
@@ -54,12 +48,12 @@ unsigned int max_bin(q15* sample_r, q15* sample_i, unsigned int len) {
 }
 
 /**
- * data[i] = data[i] * window[i]
+ * data[i].r = data[i].r * window[i]
 */
-void times_equal(q15* data, q15* window, unsigned int len) {
+void times_equal(complex_q15* data, q15* window, unsigned int len) {
     for (unsigned int i = 0; i < len; i++) {
-        q15 d = mult_q15(data[i], window[i]);
-        data[i] = d;
+        q15 d = mult_q15(data[i].r, window[i]);
+        data[i].r = d;
     }
 }
 
@@ -77,8 +71,8 @@ int main(int argc, const char** argv) {
 
     // Make a tone and then perform the FFT
     const unsigned int N = 1024;
-    q15 sample_r[N];
-    q15 sample_i[N];
+    complex_q15 sample[N];
+    //q15 sample_i[N];
     float sample_freq_hz = 2048.0;
     float tone_freq_hz = 670.0;
     float amplitude = 1.0;
@@ -86,11 +80,11 @@ int main(int argc, const char** argv) {
     // Build the window (raised cosine)
     q15 hann_window[N];
     for (unsigned int i = 0; i < N; i++) {
-        hann_window[i] = float_to_q15(0.5 * (1.0 - cos(6.283 * ((float) i) / ((float)N))));
+        hann_window[i] = f32_to_q15(0.5 * (1.0 - cos(6.283 * ((float) i) / ((float)N))));
     }
 
-    make_tone(sample_r, sample_i, N, sample_freq_hz, tone_freq_hz, amplitude);
-    times_equal(sample_r, hann_window, N);
+    make_tone(sample, N, sample_freq_hz, tone_freq_hz, amplitude);
+    times_equal(sample, hann_window, N);
 
     //cout << "Time Domain:" << endl;
     //for (unsigned int i = 0; i < len; i++) {
@@ -100,7 +94,7 @@ int main(int argc, const char** argv) {
     
     FixedFFT<N> fft;
 
-    fft.transform(sample_r, sample_i);
+    fft.transform(sample);
 
     //cout << "Freq Domain:" << endl;
     //for (unsigned int i = 0; i < len; i++) {
@@ -108,17 +102,13 @@ int main(int argc, const char** argv) {
     //    cout << i << " " << fix2float15(sample_r[i]) << endl;
     //}
 
-    unsigned int b = max_bin(sample_r, sample_i, N / 2);
+    unsigned int b = max_bin(sample, N / 2);
     cout << "Max idx " << b << endl;
-    cout << "Max mag " << mag(sample_r[b], sample_i[b]) << endl;
+    cout << "Max mag " << sample[b].mag_f32() << endl;
     cout << "Max frq " << fft.binToFreq(b, sample_freq_hz) << endl;
 
-    //cout << "M-2 mag "<< mag(sample_r[b-2], sample_i[b-2]) << endl;
-    cout << "M-1 mag "<< mag(sample_r[b-1], sample_i[b-1]) << endl;
-    cout << "M+1 mag "<< mag(sample_r[b+1], sample_i[b+1]) << endl;
-    //cout << "M+2 mag "<< mag(sample_r[b+2], sample_i[b+2]) << endl;
+    cout << "M-1 mag " << sample[b-1].mag_f32() << endl;
+    cout << "M+1 mag " << sample[b+1].mag_f32() << endl;
 
     return 0;
 }
-
-
