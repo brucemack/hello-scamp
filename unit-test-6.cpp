@@ -110,18 +110,18 @@ int main(int argc, const char** argv) {
 
    float tone_freq_hz = 670.0;
    float detected_freq_hz = 0;
+   float sample_freq_hz = 2000.0;
 
    {
         // Make a tone and then perform the FFT
         const unsigned int N = 1024;
         q15 sample_r[N];
-        float sample_freq_hz = 2048.0;
         float amplitude = 1.0;
 
         // Build the window (raised cosine)
         q15 hann_window[N];
         for (unsigned int i = 0; i < N; i++) {
-            hann_window[i] = f32_to_q15(0.5 * (1.0 - cos(6.283 * ((float) i) / ((float)N))));
+            hann_window[i] = f32_to_q15(0.5 * (1.0 - cos(2.0 * PI * ((float) i) / ((float)N))));
         }
 
         make_tone(sample_r, N, sample_freq_hz, tone_freq_hz, amplitude, amplitude / 10.0);
@@ -137,7 +137,7 @@ int main(int argc, const char** argv) {
         }
         fft.transform(sample);
 
-        unsigned int b = cq15::max_idx(sample, N / 2);
+        unsigned int b = max_idx(sample, 1, (N / 2) - 1);
         cout << "Max idx " << b << endl;
         cout << "Max mag " << sample[b].mag_f32() << endl;
         cout << "Max frq " << fft.binToFreq(b, sample_freq_hz) << endl;
@@ -150,7 +150,6 @@ int main(int argc, const char** argv) {
 
     // Correlation test using the frequency we detected before
     {
-        float sample_freq_hz = 2048.0;
         const unsigned int N = 64;
 
         // This is the center frequency we detected

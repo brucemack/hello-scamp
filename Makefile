@@ -29,6 +29,12 @@ bin/unit-test-5: build/unit-test-5.o
 bin/unit-test-6: build/unit-test-6.o build/fixed_math.o
 	g++ -o $@ -L/usr/local/lib $^ 
 
+bin/unit-test-7: build/unit-test-7.o build/fixed_math.o build/Symbol6.o \
+	build/CodeWord12.o build/CodeWord24.o \
+	build/Frame30.o build/FileModulator.o \
+	build/Util.o build/TestModem.o build/TestModem2.o build/ClockRecoveryPLL.o
+	g++ -o $@ -L/usr/local/lib $^ 
+
 build/%.o:	%.cpp
 	g++ -std=c++11 -g -c $^ -o $@
 

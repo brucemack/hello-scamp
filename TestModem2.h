@@ -22,6 +22,9 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 namespace scamp {
 
+/**
+ * Modulation has amplitude of 1.0 and is centered at 0.0
+ */
 class TestModem2 : public Modulator {
 public:
 
