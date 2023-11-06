@@ -43,6 +43,13 @@ struct cq15 {
         float imf = q15_to_f32(i);
         return std::sqrt(ref * ref + imf * imf);
     }
+
+    void accumulate(cq15 c) {
+        r += c.r;
+        i += c.i;
+    }
+
+    static cq15 mult(cq15 c0, cq15 c1);
 };
 
 /**
@@ -60,7 +67,7 @@ static uint16_t max_idx(cq15* sample, uint16_t start, uint16_t len) {
         float m = sample[start + i].mag_f32();
         if (m > max_mag) {
             max_mag = m;
-            max_bin = i;
+            max_bin = start + i;
         }
     }
     return max_bin;

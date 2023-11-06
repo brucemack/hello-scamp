@@ -19,7 +19,9 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include <functional>
 #include <cinttypes>
+
 #include "Frame30.h"
+#include "fixed_math.h"
 
 namespace scamp {
 
@@ -33,6 +35,14 @@ void makePairs(const char* in, std::function<void(char a, char b)> cb);
 */
 unsigned int encodeString(const char* in, Frame30* outList, unsigned int outListSize, 
     bool includeSyncFrame);
+
+void make_tone(q15* output, 
+    const unsigned int len, float sample_freq_hz, 
+    float tone_freq_hz, float amplitude, float phaseDegrees = 0);
+
+void make_complex_tone(cq15* output, 
+    const unsigned int len, float sample_freq_hz, 
+    float tone_freq_hz, float amplitude, float phaseDegrees = 0);
 
 }
 

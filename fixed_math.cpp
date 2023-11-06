@@ -27,3 +27,19 @@ q15 corr_q15(q15* data, q15* carrier, uint16_t len) {
     return result;
 }
 
+cq15 cq15::mult(cq15 c0, cq15 c1) {
+    q15 a = c0.r;
+    q15 b = c0.i;
+    q15 c = c1.r;
+    q15 d = c1.i;
+    // Use the method that minimizes multiplication
+    q15 ac = mult_q15(a, c);
+    q15 bd = mult_q15(b, d);
+    q15 a_plus_b = a + b;
+    q15 c_plus_d = c + d;
+    q15 p0 = mult_q15(a_plus_b, c_plus_d);
+    cq15 result;
+    result.r = ac - bd;
+    result.i = p0 - ac - bd;
+    return result;
+}

@@ -19,6 +19,8 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 namespace scamp {
 
+static const float PI = 3.1415926f;
+
 void makePairs(const char* in, std::function<void(char a, char b)> cb) {
     const char* p = in;
     while (*p != 0) {
@@ -62,6 +64,38 @@ unsigned int encodeString(const char* in, Frame30* outList, unsigned int outList
     // Trigger the frame building
     //makePairs(in, procPair);
     return used;
+}
+
+void make_tone(q15* output, 
+    const unsigned int len, float sample_freq_hz, 
+    float tone_freq_hz, float amplitude, float phaseDegrees) {
+
+    float omega = 2.0f * PI * (tone_freq_hz / sample_freq_hz);
+    float phi = 2.0f * PI * (phaseDegrees / 360.0);
+    float max_amp = 0;
+
+    for (unsigned int i = 0; i < len; i++) {
+        float sig = std::cos(phi) * amplitude;
+        output[i] = f32_to_q15(sig);
+        phi += omega;
+    }
+}
+
+void make_complex_tone(cq15* output, 
+    const unsigned int len, float sample_freq_hz, 
+    float tone_freq_hz, float amplitude, float phaseDegrees) {
+
+    float omega = 2.0f * PI * (tone_freq_hz / sample_freq_hz);
+    float phi = 2.0f * PI * (phaseDegrees / 360.0);
+    float max_amp = 0;
+
+    for (unsigned int i = 0; i < len; i++) {
+        float sig_i = std::cos(phi) * amplitude;
+        output[i].r = f32_to_q15(sig_i);
+        float sig_q = std::sin(phi) * amplitude;
+        output[i].i = f32_to_q15(sig_q);
+        phi += omega;
+    }
 }
 
 } // namespace
