@@ -166,7 +166,7 @@ int main(int argc, const char** argv) {
 
     // Correlation test using the frequency we detected before
     {
-        const unsigned int blockN = 64;
+        const unsigned int blockN = 32;
 
         // Sample a block from the original tone
         cq15 sig_sample[blockN];
@@ -189,11 +189,11 @@ int main(int argc, const char** argv) {
         make_complex_tone(lo_sample, blockN, sample_freq_hz, lo_freq_hz, lo_amplitude, lo_phase);
         cout << "Center (Phased) " << complex_corr(sig_sample, lo_sample, blockN) << endl;
 
-        make_complex_tone(lo_sample, blockN, sample_freq_hz, lo_freq_hz - 25, lo_amplitude);
-        cout << "Center - 25     " << complex_corr(sig_sample, lo_sample, blockN) << endl;
+        make_complex_tone(lo_sample, blockN, sample_freq_hz, lo_freq_hz - 200, lo_amplitude);
+        cout << "Center - 200    " << complex_corr(sig_sample, lo_sample, blockN) << endl;
 
-        make_complex_tone(lo_sample, blockN, sample_freq_hz, lo_freq_hz + 25, lo_amplitude);
-        cout << "Center + 25     " << complex_corr(sig_sample, lo_sample, blockN) << endl;
+        make_complex_tone(lo_sample, blockN, sample_freq_hz, lo_freq_hz + 200, lo_amplitude);
+        cout << "Center + 200    " << complex_corr(sig_sample, lo_sample, blockN) << endl;
     }
 
     return 0;
