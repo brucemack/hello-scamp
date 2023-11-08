@@ -41,7 +41,7 @@ bin/unit-test-7: build/unit-test-7.o build/fixed_math.o build/Symbol6.o \
 	g++ -o $@ -L/usr/local/lib $^ 
 
 build/%.o:	%.cpp
-	g++ -std=c++11 -g -c $^ -o $@
+	g++ -std=c++11 -fstack-protector-all -g -c $^ -o $@
 
 setup:
 	mkdir -p build bin

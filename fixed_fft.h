@@ -32,10 +32,12 @@ Tom Roberts, and Malcolm Slaney (malcolm@interval.com).
  * The goal is to create a straight-forward implementation that can 
  * be built on a desktop or embedded platforms.
  */
-template<uint16_t N> class FixedFFT {
+class FixedFFT {
 public:
 
-    FixedFFT() {
+    FixedFFT(uint16_t n, q15* trigTable) 
+    :   N(n),
+        _cosTable(trigTable) {
         for (uint16_t i = 0; i < N; i++) {
             _cosTable[i] = f32_to_q15(std::sin(TWO_PI * ((float) i) / (float)N));
         }
@@ -142,13 +144,14 @@ public:
 
 private: 
 
+    const uint16_t N;
     const uint16_t _log2N = std::log2(N);
     const uint16_t _shiftAmount = 16 - _log2N;
     const float PI = std::atan(1.0) * 4.0;
     const float TWO_PI = PI * 2.0f;
 
     // Pre-built table for fast trig
-    q15 _cosTable[N]; 
+    q15* _cosTable;
 };
 
 #endif

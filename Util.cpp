@@ -61,8 +61,6 @@ unsigned int encodeString(const char* in, Frame30* outList, unsigned int outList
             }
         }
     );
-    // Trigger the frame building
-    //makePairs(in, procPair);
     return used;
 }
 

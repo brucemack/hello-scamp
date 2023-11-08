@@ -44,6 +44,9 @@ namespace scamp {
         unsigned int _symbolLength;
         unsigned int _markFreq;
         unsigned int _spaceFreq;
+        // In order to maintain phase continuity we keep the phase
+        // between tones.
+        float _phi;
     };
 }
 

@@ -37,13 +37,13 @@ public:
     virtual void sendMark();
     virtual void sendSpace();
 
-    unsigned int getSamplesUsed() const { return _samplesUsed; }
+    uint32_t getSamplesUsed() const { return _samplesUsed; }
 
 private:
 
     float* _samples;
     unsigned int _samplesSize;
-    unsigned int _samplesUsed;
+    uint32_t _samplesUsed;
     unsigned int _sampleRate;
     unsigned int _samplesPerSymbol;
     unsigned int _markFreq;

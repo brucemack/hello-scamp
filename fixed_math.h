@@ -17,6 +17,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #ifndef _fixed_math_h
 #define _fixed_math_h
 
+#include <iostream>
 #include <cstdint>
 #include <cmath>
 
@@ -42,6 +43,12 @@ struct cq15 {
         float ref = q15_to_f32(r);
         float imf = q15_to_f32(i);
         return std::sqrt(ref * ref + imf * imf);
+    }
+
+    float mag_f32_squared() const {
+        float ref = q15_to_f32(r);
+        float imf = q15_to_f32(i);
+        return ref * ref + imf * imf;
     }
 
     void accumulate(cq15 c) {

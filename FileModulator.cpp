@@ -25,7 +25,8 @@ FileModulator::FileModulator(std::ostream& str, unsigned int sampleRate, unsigne
     _sampleRate(sampleRate),
     _symbolLength(symbolLength),
     _markFreq(markFreq),
-    _spaceFreq(spaceFreq)
+    _spaceFreq(spaceFreq),
+    _phi(0)
 {
 }
 
@@ -47,17 +48,15 @@ void FileModulator::sendSilence() {
 void FileModulator::_send(unsigned int freq) {
 
     const float scale = 32760;
-    const float deltaPhi = 2.0 * 3.14159 * (float)freq / (float)_sampleRate;
-    float phi = 0.0;
+    const float omega = 2.0 * 3.14159 * (float)freq / (float)_sampleRate;
 
     for (unsigned int i = 0; i < _symbolLength; i++) {
-        float s = std::cos(phi) * scale;
+        float s = std::cos(_phi) * scale;
         _str << (int)s << "\n";
-        phi += deltaPhi;
+        _phi += omega;
     }
 
     _str.flush();
 }
-
 
 }
