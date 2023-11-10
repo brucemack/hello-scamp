@@ -58,23 +58,24 @@ int main(int argc, const char** argv) {
         assertm(wd12.getRaw() == wd12_b.getRaw(), "Reverse test failure");
     }
 
-    // Demonstrate a code/decode sequence with an error injected
+    // Unit test that demonstrate a code/decode sequence with an error 
+    // injected.  The Golay FEC method will handle up to three bad bits.
     {
-        const uint8_t data_x = 0b010000;
-        const uint8_t data_y = 0b111110;
-        // Make the code word
-        const uint16_t data_12 = (data_y << 6) | data_x;
-        CodeWord12 wd12(data_12, true);
-        // Coded 
+        // The two SCAMP characters being transmitted
+        Symbol6 xxx(0b010000);
+        Symbol6 yyy(0b111110);
+        // Make the 12-bit codeword
+        CodeWord12 wd12 = CodeWord12::fromSymbols(xxx, yyy);
+        // Make the 24-bit code word
         CodeWord24 wd24 = CodeWord24::fromCodeWord12(wd12);
-        // Inject an error into the raw message
+        // Inject an error into the raw message.  In this case we are 
+        // damaging two of the bits.
         const uint32_t damaged_code_word_24 = wd24.getRaw() ^ 0b000100000100;
         CodeWord24 wd24_b(damaged_code_word_24);
-
-        // Decode
+        // Reverse the process to get back to a 12-bit code word
         CodeWord12 wd12_b = wd24_b.toCodeWord12();
-
-        // Check 
+        // Check the the original 12-bit code word matches the 
+        // one that comes out of the Golay decoding.
         assertm(wd12.getRaw() == wd12_b.getRaw(), "Error correct problem");
         assertm(wd12_b.isValid(), "Validity check problem");
     }

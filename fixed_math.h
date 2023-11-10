@@ -71,10 +71,12 @@ static uint16_t max_idx(cq15* sample, uint16_t start, uint16_t len) {
     float max_mag = 0;
     unsigned int max_bin = 0;
     for (unsigned int i = 0; i < len; i++) {
-        float m = sample[start + i].mag_f32();
-        if (m > max_mag) {
-            max_mag = m;
-            max_bin = start + i;
+        if (i >= start) {
+            float m = sample[i].mag_f32();
+            if (m > max_mag) {
+                max_mag = m;
+                max_bin = i;
+            }
         }
     }
     return max_bin;
