@@ -17,6 +17,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #ifndef _Util_h
 #define _Util_h
 
+#include <iostream>
 #include <functional>
 #include <cinttypes>
 
@@ -36,13 +37,24 @@ void makePairs(const char* in, std::function<void(char a, char b)> cb);
 unsigned int encodeString(const char* in, Frame30* outList, unsigned int outListSize, 
     bool includeSyncFrame);
 
+void visitTone(const unsigned int len, uint16_t sample_freq_hz, uint16_t tone_freq_hz,
+    float amplitude, uint16_t phaseDegrees, std::function<void(uint16_t idx, float y)> cb);
+
 void make_tone(q15* output, 
+    const unsigned int len, float sample_freq_hz, 
+    float tone_freq_hz, float amplitude, float phaseDegrees = 0);
+
+void addTone(q15* output, 
     const unsigned int len, float sample_freq_hz, 
     float tone_freq_hz, float amplitude, float phaseDegrees = 0);
 
 void make_complex_tone(cq15* output, 
     const unsigned int len, float sample_freq_hz, 
     float tone_freq_hz, float amplitude, float phaseDegrees = 0);
+
+void make_bar(std::ostream& str, unsigned int len);
+
+void render_spectrum(std::ostream& str, const cq15* x, uint16_t fftN, uint16_t sampleFreq);
 
 }
 

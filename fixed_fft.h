@@ -138,7 +138,7 @@ public:
         }
     }
 
-    uint16_t binToFreq(uint16_t bin, uint16_t sampleFreq) {
+    uint16_t binToFreq(uint16_t bin, uint16_t sampleFreq) const {
         return (bin * sampleFreq) / N;
     }
 

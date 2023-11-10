@@ -43,6 +43,9 @@ bin/unit-test-7: build/unit-test-7.o build/fixed_math.o build/Symbol6.o \
 bin/unit-test-8: build/unit-test-8.o $(OBJS)
 	g++ -o $@ -L/usr/local/lib $^ 
 
+bin/unit-test-9: build/unit-test-9.o $(OBJS)
+	g++ -o $@ -L/usr/local/lib $^ 
+
 build/%.o:	%.cpp
 	g++ -std=c++11 -fstack-protector-all -g -c $^ -o $@
 

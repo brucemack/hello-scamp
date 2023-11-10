@@ -67,7 +67,7 @@ q15 corr_q15(q15* d0, q15* d1, uint16_t len);
 /**
  * Returns the index with the maximum magnitude.
  */
-static uint16_t max_idx(cq15* sample, uint16_t start, uint16_t len) {
+static uint16_t max_idx(const cq15* sample, uint16_t start, uint16_t len) {
     float max_mag = 0;
     unsigned int max_bin = 0;
     for (unsigned int i = 0; i < len; i++) {
