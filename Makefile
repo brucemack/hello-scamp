@@ -46,6 +46,9 @@ bin/unit-test-8: build/unit-test-8.o $(OBJS)
 bin/unit-test-9: build/unit-test-9.o $(OBJS)
 	g++ -o $@ -L/usr/local/lib $^ 
 
+bin/unit-test-10: build/unit-test-10.o $(OBJS)
+	g++ -o $@ -L/usr/local/lib $^ 
+
 build/%.o:	%.cpp
 	g++ -std=c++11 -fstack-protector-all -g -c $^ -o $@
 

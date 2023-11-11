@@ -72,30 +72,6 @@ static const float PI = 3.1415926f;
 //     }
 // }
 
-float complex_corr(cq15* c0, cq15* c1, uint16_t len) {
-
-    float result_r = 0;
-    float result_i = 0;
-
-    for (uint16_t i = 0; i < len; i++) {
-        float a = q15_to_f32(c0[i].r);
-        float b = q15_to_f32(c0[i].i);
-        float c = q15_to_f32(c1[i].r);
-        // Complex conjugate
-        float d = -q15_to_f32(c1[i].i);
-        // Use the method that minimizes multiplication
-        float ac = a * c;
-        float bd = b * d;
-        float a_plus_b = a + b;
-        float c_plus_d = c + d;
-        float p0 = a_plus_b * c_plus_d;
-        result_r += (ac - bd) / (float)len;
-        result_i += (p0 - ac - bd) / (float)len;
-    }
-
-    return std::sqrt(result_r * result_r + result_i * result_i);
-}
-
 float ang(q15 r, q15 i) {
     float ref = q15_to_f32(r);
     float imf = q15_to_f32(i);

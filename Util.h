@@ -52,6 +52,14 @@ void make_complex_tone(cq15* output,
     const unsigned int len, float sample_freq_hz, 
     float tone_freq_hz, float amplitude, float phaseDegrees = 0);
 
+void make_complex_tone_2(cq15* output, 
+    uint32_t len, float bin, uint16_t binCount, 
+    float amplitude, float phaseDegrees = 0);
+
+float complex_corr(cq15* c0, cq15* c1, uint16_t len);
+
+float complex_corr_2(q15* c0, cq15* c1, uint16_t len);
+
 void make_bar(std::ostream& str, unsigned int len);
 
 void render_spectrum(std::ostream& str, const cq15* x, uint16_t fftN, uint16_t sampleFreq);

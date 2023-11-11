@@ -94,13 +94,13 @@ unsigned int encodeString(const char* in, Frame30* outList, unsigned int outList
 }
 
 void visitTone(const unsigned int len, uint16_t sample_freq_hz, uint16_t tone_freq_hz,
-    float amplitude, uint16_t phaseDegrees, std::function<void(uint16_t idx, float y)> cb) {
+    float amplitude, uint16_t phaseDegrees, std::function<void(unsigned int idx, float y)> cb) {
 
     float omega = 2.0f * PI * ((float)tone_freq_hz / (float)sample_freq_hz);
     float phi = 2.0f * PI * ((float)phaseDegrees / 360.0);
     float max_amp = 0;
 
-    for (uint16_t i = 0; i < len; i++) {
+    for (unsigned int i = 0; i < len; i++) {
         float sig = std::cos(phi) * amplitude;
         cb(i, sig);
         phi += omega;
@@ -111,19 +111,17 @@ void addTone(q15* output,
     const unsigned int len, float sample_freq_hz, 
     float tone_freq_hz, float amplitude, float phaseDegrees) {
     // Make the callback for each point
-    std::function<void(uint16_t, float)> cb = [output](uint16_t ix, float x) {
+    std::function<void(unsigned int, float)> cb = [output](unsigned int ix, float x) {
         output[ix] += f32_to_q15(x);
     };
-    cout << "VISIT " << len << endl;
     visitTone(len, sample_freq_hz, tone_freq_hz, amplitude, phaseDegrees, cb);
-    cout << "DONE" << endl;
 }
 
 void make_tone(q15* output, 
     const unsigned int len, float sample_freq_hz, 
     float tone_freq_hz, float amplitude, float phaseDegrees) {
     // Make the callback for each point
-    std::function<void(uint16_t idx, float y)> cb = [output](uint16_t ix, float x) {
+    std::function<void(unsigned int, float)> cb = [output](unsigned int ix, float x) {
         output[ix] = f32_to_q15(x);
     };
     visitTone(len, sample_freq_hz, tone_freq_hz, amplitude, phaseDegrees, cb);
@@ -146,5 +144,70 @@ void make_complex_tone(cq15* output,
     }
 }
 
-} // namespace
+void make_complex_tone_2(cq15* output, 
+    uint32_t len, float bin, uint16_t binCount, 
+    float amplitude, float phaseDegrees) {
 
+    float omega = 2.0f * PI * bin / (float)binCount;
+    float phi = 2.0f * PI * (phaseDegrees / 360.0);
+    float max_amp = 0;
+
+    for (uint32_t i = 0; i < len; i++) {
+        float sig_i = std::cos(phi) * amplitude;
+        output[i].r = f32_to_q15(sig_i);
+        float sig_q = std::sin(phi) * amplitude;
+        output[i].i = f32_to_q15(sig_q);
+        phi += omega;
+    }
+}
+
+float complex_corr(cq15* c0, cq15* c1, uint16_t len) {
+
+    float result_r = 0;
+    float result_i = 0;
+
+    for (uint16_t i = 0; i < len; i++) {
+        float a = q15_to_f32(c0[i].r);
+        float b = q15_to_f32(c0[i].i);
+        float c = q15_to_f32(c1[i].r);
+        // Complex conjugate
+        float d = -q15_to_f32(c1[i].i);
+        // Use the method that minimizes multiplication
+        float ac = a * c;
+        float bd = b * d;
+        float a_plus_b = a + b;
+        float c_plus_d = c + d;
+        float p0 = a_plus_b * c_plus_d;
+        result_r += (ac - bd) / (float)len;
+        result_i += (p0 - ac - bd) / (float)len;
+    }
+
+    return std::sqrt(result_r * result_r + result_i * result_i);
+}
+
+// TODO: CLEAN THIS UP
+float complex_corr_2(q15* c0, cq15* c1, uint16_t len) {
+
+    float result_r = 0;
+    float result_i = 0;
+
+    for (uint16_t i = 0; i < len; i++) {
+        float a = q15_to_f32(c0[i]);
+        float b = 0;
+        float c = q15_to_f32(c1[i].r);
+        // Complex conjugate
+        float d = -q15_to_f32(c1[i].i);
+        // Use the method that minimizes multiplication
+        float ac = a * c;
+        float bd = b * d;
+        float a_plus_b = a + b;
+        float c_plus_d = c + d;
+        float p0 = a_plus_b * c_plus_d;
+        result_r += (ac - bd) / (float)len;
+        result_i += (p0 - ac - bd) / (float)len;
+    }
+
+    return std::sqrt(result_r * result_r + result_i * result_i);
+}
+
+} // namespace

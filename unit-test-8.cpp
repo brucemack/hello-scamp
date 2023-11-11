@@ -17,6 +17,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include <fstream>
 #include <cmath>
 #include <string>
+#include <cassert>
 
 #include "Util.h"
 #include "Symbol6.h"
@@ -54,7 +55,6 @@ static void shift_block(q15* fftBlock, uint16_t fftN, uint16_t blockSize) {
     }
 }
 
-
 int main(int argc, const char** argv) {
     
     {
@@ -66,6 +66,7 @@ int main(int argc, const char** argv) {
         while (std::getline(infile, line)) {
             float sample = std::stof(line);
             samples[sampleCount++] = sample / 32000.0;
+            assert(sampleCount < S);
         }
 
         /*

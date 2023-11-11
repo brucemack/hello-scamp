@@ -34,12 +34,14 @@ using namespace scamp;
 
 const float PI = 3.1415926f;
 
-static void shift_block(q15* fftBlock, uint16_t fftN, uint16_t blockSize) {
-    for (uint16_t i = 0; i < fftN; i++) {
-        if (i < (fftN - blockSize)) {
-            fftBlock[i] = fftBlock[i + blockSize];
+// This shifts an array down towards the lower indices by one block
+// size.
+static void shift_block_down(q15* d, uint16_t n, uint16_t blockSize) {
+    for (uint16_t i = 0; i < n; i++) {
+        if (i < (n - blockSize)) {
+            d[i] = d[i + blockSize];
         } else {
-            fftBlock[i] = 0;
+            d[i] = 0;
         }
     }
 }
@@ -87,14 +89,16 @@ int main(int argc, const char** argv) {
         // We purposely offset the data stream by a half symbol 
         // to stress the PLL.
         //modem.sendHalfSilence();
-        for (unsigned int i = 0; i < 15; i++)
+        // This silence is 30 symbols, or 30 * 60 = 180 samples long
+        for (unsigned int i = 0; i < 30; i++)
             modem2.sendSilence();
         // Transmit a legit message
         for (unsigned int i = 0; i < frameCount; i++) {
             frames[i].transmit(modem2);
         }
-        for (unsigned int i = 0; i < 15; i++)
+        for (unsigned int i = 0; i < 30; i++) {
             modem2.sendSilence();
+        }
     }
     
     // Now decode
@@ -117,13 +121,12 @@ int main(int argc, const char** argv) {
         cout << "long mark duration " << longMarkDuration << endl;
         // Calculate the number of blocks that make up the long mark and
         // round down.  We give this a slight haircut to improve robustness.
-        const uint16_t longMarkBlocks = ((longMarkDuration / blockDuration) * 0.85);
-        
-        // This is the pointer into the main datastream
+        const uint16_t longMarkBlocks = ((longMarkDuration / blockDuration) * 0.70);
+       
+        // This is the pointer into the main data stream
         uint32_t dataPtr = 0;
 
         const uint16_t fftN = 512;
-
         q15 fftBlock[fftN];
         q15 window[fftN];
         q15 trigTable[fftN];
@@ -142,22 +145,22 @@ int main(int argc, const char** argv) {
         // magnitude.
         const uint16_t blockHistorySize = longMarkBlocks;
         uint16_t maxBinHistory[blockHistorySize];
-        float powerFractionHistory[blockHistorySize];
         for (uint16_t i = 0; i < blockHistorySize; i++) {
             maxBinHistory[i] = 0;
-            powerFractionHistory[i] = 0;
         }
 
         bool locked = false;
-        uint16_t lockedBin = 0;
+        uint16_t lockedBinMark = 0;
+
+        const uint16_t detectorLength = blockSize;
+        cq15 markDetectorTone[detectorLength];
+        cq15 spaceDetectorTone[detectorLength];
 
         // Walk through the data one block at a time
         while ((dataPtr + blockSize) < modem2.getSamplesUsed()) {            
 
-            blockCount++;
-
-            // Shift the FFT block down
-            shift_block(fftBlock, fftN, blockSize);
+            // Shift the FFT block down (towards the lower indices)
+            shift_block_down(fftBlock, fftN, blockSize);
 
             // Fill in the top part of the FFT block with the new data
             for (uint16_t i = 0; i < blockSize; i++) {
@@ -168,15 +171,15 @@ int main(int argc, const char** argv) {
             cq15 x[fftN];
             for (uint16_t i = 0; i < fftN; i++) {
                 x[i].r = mult_q15(fftBlock[i], window[i]);
+                //x[i].r = fftBlock[i];
                 x[i].i = 0;
             }
             fft.transform(x);
 
             // Find the largest power. Notice that we ignore bin 0 (DC)
             // since that's not relevant.
-            const unsigned int b = max_idx(x, 1, (fftN / 2) - 1);
-
-            cout << blockCount << " " << b << endl;
+            const uint16_t maxBin = max_idx(x, 1, fftN / 2);
+            const unsigned int maxFreq = fft.binToFreq(maxBin, sampleFreq);
 
             // If we are not yet locked, try to lock
             if (!locked) {
@@ -186,55 +189,85 @@ int main(int argc, const char** argv) {
                 for (uint16_t i = 0; i < fftN / 2; i++) {
                     totalPower += x[i].mag_f32_squared();
                 }
-                // Find the percentage of power at the max (and adjacent)
-                float maxBinPower = x[b].mag_f32_squared();
-                if (b > 1) {
-                    maxBinPower += x[b - 1].mag_f32_squared();
+                // Find the percentage of power at the max (and two adjacent)
+                float maxBinPower = x[maxBin].mag_f32_squared();
+                if (maxBin > 1) {
+                    maxBinPower += x[maxBin - 1].mag_f32_squared();
                 }
-                if (b < (fftN / 2) - 1) {
-                    maxBinPower += x[b + 1].mag_f32_squared();
+                if (maxBin < (fftN / 2) - 1) {
+                    maxBinPower += x[maxBin + 1].mag_f32_squared();
                 }
-                float powerFract = maxBinPower / totalPower;
+                const float maxBinPowerFract = maxBinPower / totalPower;
 
                 // Shift the history collection area and accumulate the new 
                 // observation.
                 for (uint16_t i = 0; i < blockHistorySize - 1; i++) {
                     maxBinHistory[i] = maxBinHistory[i + 1];
-                    powerFractionHistory[i] = powerFractionHistory[i + 1];
                 }
-                maxBinHistory[blockHistorySize - 1] = b;
-                powerFractionHistory[blockHistorySize - 1] = powerFract;
+                maxBinHistory[blockHistorySize - 1] = maxBin;
 
-                // Find the average and the max variance 
-                uint32_t t = 0;
-                float p = 0;
+                // Find the variance of the max bin across the recent observations
+                // to see if we have stability.  We are only looking 
+                float maxBinMean = 0;
                 for (uint16_t i = 0; i < blockHistorySize; i++) {
-                t += maxBinHistory[i];
-                p += powerFractionHistory[i];
-                }            
-                uint16_t averageMaxBin = t / blockHistorySize;
-                float averagePowerFraction = p / (float)blockHistorySize;
-                //cout << averageMaxBin << " " << averagePowerFraction << endl;
+                    maxBinMean += maxBinHistory[i];
+                }
 
-                uint16_t maxDiff = 0;
-                for (uint16_t i = 0; i < blockHistorySize; i++) {
-                    uint16_t absDiff = 
-                        std::abs((int16_t)maxBinHistory[i] - (int16_t)averageMaxBin);
-                    if (absDiff > maxDiff) {
-                        maxDiff = absDiff;
+                // The locking logic only works when the history is full
+                if (blockCount >= blockHistorySize) {
+                 
+                    maxBinMean /= (float)blockHistorySize;
+
+                    float maxBinVar = 0;
+                    for (uint16_t i = 0; i < blockHistorySize; i++) {
+                        if (maxBinHistory[i] != 0) {
+                            maxBinVar += std::pow(maxBinHistory[i] - maxBinMean, 2);
+                        }
                     }
-                }
+                    maxBinVar /= ((float)blockHistorySize - 1);
+                    float maxBinStd = std::sqrt(maxBinVar);
+        
+                    //cout << blockCount << " " << maxBin << " " << maxBinStd << " " << maxBinPowerFract << endl;
 
-                // If the variance is small and the power is large then 
-                // assume we're seeing the "long mark"                
-                if (maxDiff <= 2 && averagePowerFraction > 0.40) {
-                    locked = true;
-                    lockedBin = b;
-                    cout << "LOCKED ON BIN " << lockedBin << endl;
+                    // If the standard deviation is small and the power is large then 
+                    // assume we're seeing the "long mark"                
+                    if (maxBinStd <= 1.0 && maxBinPowerFract > 0.40) {
+                        locked = true;
+                        lockedBinMark = maxBin;
+                        float lockedBinSpread = ((float)(markFreq - spaceFreq) / (float)sampleFreq) * 
+                            (float)fftN;
+                        float lockedBinSpace = ((float)lockedBinMark - lockedBinSpread);
+
+                        cout << "LOCKED ON BINS " << lockedBinMark << "/" << lockedBinSpace << endl;
+
+                        // Build the tone needed by the quadrature decoder
+                        float binScale = (float)detectorLength / (float)fftN;
+                        make_complex_tone_2(markDetectorTone, detectorLength, 
+                            (float)lockedBinMark * binScale, detectorLength, 0.5);
+                        make_complex_tone_2(spaceDetectorTone, detectorLength, 
+                            (float)lockedBinSpace * binScale, detectorLength, 0.5);
+                    }
+                } else {
+                    //cout << blockCount << " " << maxBin << endl;
                 }
             }
 
+            if (locked) {
+                float corrMark = complex_corr_2(&(fftBlock[fftN - detectorLength]), 
+                    markDetectorTone, detectorLength);
+                float corrSpace = complex_corr_2(&(fftBlock[fftN - detectorLength]), 
+                    spaceDetectorTone, detectorLength);
+                float diff = corrMark - corrSpace;
+                cout << "mark " << corrMark << " space " << corrSpace << " diff " << diff << endl;
+            }
+
+            if (blockCount > 125) {
+                return 0;
+            }
+
+
             dataPtr += blockSize;
+            blockCount++;
         }
 
         cout << endl;
