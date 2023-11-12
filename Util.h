@@ -52,11 +52,13 @@ void make_complex_tone(cq15* output,
     const unsigned int len, float sample_freq_hz, 
     float tone_freq_hz, float amplitude, float phaseDegrees = 0);
 
-void make_complex_tone_2(cq15* output, 
-    uint32_t len, float bin, uint16_t binCount, 
+void make_complex_tone_2(cq15* output, uint32_t len, 
+    float bin, uint16_t binCount, 
     float amplitude, float phaseDegrees = 0);
 
 float complex_corr(cq15* c0, cq15* c1, uint16_t len);
+
+float pi();
 
 /**
  * This is a convolution function that supports a circular buffer

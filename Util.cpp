@@ -23,7 +23,11 @@ using namespace std;
 
 namespace scamp {
 
-static const float PI = 3.1415926f;
+static const float PI = 3.14159265358979323846;
+
+float pi() {
+    return PI;
+}
 
 void make_bar(ostream& str, unsigned int len) {
     for (unsigned int i = 0; i < len; i++) {

@@ -34,8 +34,6 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 using namespace std;
 using namespace scamp;
 
-const float PI = 3.1415926f;
-
 // ------ Data Area -------
 
 const unsigned int sampleFreq = 2000;
@@ -43,15 +41,32 @@ const unsigned int samplesPerSymbol = 60;
 const unsigned int symbolCount = 2;
 const unsigned int markFreq = 667;
 const unsigned int spaceFreq = 600;
+// Here we can inject a tuning error to show that the demodulator will
+// still find the signal.
+const unsigned int tuningErrorHz = 100;
 const unsigned int S = 34 * 30 * samplesPerSymbol;
 static float samples[S];
 
+// The size of the FFT used for frequency acquisition
 const uint16_t fftN = 512;
 static q15 buffer[fftN];
 
 int main(int argc, const char** argv) {
 
-    TestModem2 modem2(samples, S, sampleFreq, samplesPerSymbol, markFreq, spaceFreq);
+    cout << "SCAMP Modem Demonstration 7a" << endl;
+    cout << "  Sample Freq    : " << sampleFreq << endl;
+    cout << "  Mark           : " << markFreq + tuningErrorHz << endl;
+    cout << "  Space          : " << spaceFreq + tuningErrorHz << endl;
+    cout << "  Samples/Symbol : " << samplesPerSymbol << endl;
+
+    // This is the modem used for the demonstration.  Samples
+    // are written to a memory buffer.
+    TestModem2 modem2(samples, S, sampleFreq, samplesPerSymbol, 
+        markFreq + tuningErrorHz, spaceFreq + tuningErrorHz);
+
+    // This is a modem that is used to capture the data for printing.
+    int8_t printSamples[34 * 30];
+    TestModem modem3(printSamples, sizeof(printSamples), 1);
     
     // =========================================================================
     // Make a message, encode it, and then recover it. In this test we are 
@@ -72,19 +87,40 @@ int main(int argc, const char** argv) {
         // Transmit a legit message
         for (unsigned int i = 0; i < frameCount; i++) {
             frames[i].transmit(modem2);
+            frames[i].transmit(modem3);
         }
         for (unsigned int i = 0; i < 30; i++) {
             modem2.sendSilence();
         }
     }
-    
+
+    // Display
+    {
+        cout << endl << "Sending these frames:" << endl;
+        for (uint16_t i = 0; i < modem3.getSamplesUsed(); i++) {
+            if (i % 30 == 0) {
+                cout << endl;
+            }
+            if (printSamples[i] == 1) {
+                cout << "1";
+            } else if (printSamples[i] == -1) {
+                cout << "0";
+            } else {
+                cout << "?";
+            }
+        }
+        cout << endl << endl;
+    }
+
     // Now decode without any prior knowledge of the frequency or phase
-    // of the transmitter
+    // of the transmitter.
     {
         ostringstream outStream;
 
         ClockRecoveryPLL pll(sampleFreq);
-        pll.setBitFrequencyHint(33);
+        // NOTICE: We are purposely setting the initial frequency slightly 
+        // wrong to show that PLL will adjust accordingly.
+        pll.setBitFrequencyHint(36);
         // The samples are processed one block at a time. This is the
         // size of the block.
         const uint16_t blockSize = 32;
@@ -107,9 +143,9 @@ int main(int argc, const char** argv) {
 
         const FixedFFT fft(fftN, trigTable);
 
-        // Build the window (raised cosine)
+        // Build the Hann window for the FFT (raised cosine)
         for (uint16_t i = 0; i < fftN; i++) {
-            window[i] = f32_to_q15(0.5 * (1.0 - std::cos(2.0 * PI * ((float) i) / ((float)fftN))));
+            window[i] = f32_to_q15(0.5 * (1.0 - std::cos(2.0 * pi() * ((float) i) / ((float)fftN))));
         }
 
         // This is where we store the history of the bin with the largest 
@@ -125,15 +161,19 @@ int main(int argc, const char** argv) {
         uint16_t blockCount = 0;
         uint16_t blockPtr = 0;
         uint16_t activeSymbol = 0;
-        bool inSync = false;
+
+        bool inDataSync = false;
         // Here is where we accumulate data bits
         uint32_t frameBitAccumulator = 0;
         // The number of bits received in the frame
         uint16_t frameBitCount = 0;
+        // The number of frames received
+        uint16_t frameCount = 0;
 
         // These buffers are loaded based on the frequency that the decoder
         // decides to lock onto.
-        const uint16_t demodulatorToneN = blockSize;
+        // TODO: DO WE NEED A WINDOW HERE?
+        const uint16_t demodulatorToneN = 16;
         cq15 demodulatorTone[symbolCount][demodulatorToneN];
 
         // These buffers hold the history of the detection of the symbol tones
@@ -144,6 +184,10 @@ int main(int argc, const char** argv) {
         // Walk through the data one byte at a time.  We do something extra
         // each time we have processed a complete block.
         while (samplePtr < modem2.getSamplesUsed()) {            
+
+            //if (samplePtr % 60 == 0) {
+            //    cout << "------ " << (samplePtr / 60) << endl;
+            //}
 
             const q15 sample = f32_to_q15(samples[samplePtr++]);
             // Capture the sample in the circular buffer            
@@ -222,7 +266,7 @@ int main(int argc, const char** argv) {
 
                         // If the standard deviation is small and the power is large then 
                         // assume we're seeing the "long mark"                
-                        if (maxBinStd <= 1.0 && maxBinPowerFract > 0.40) {
+                        if (maxBinStd <= 1.0 && maxBinPowerFract > 0.10) {
                             frequencyLocked = true;
                             lockedBinMark = maxBin;
                             float lockedBinSpread = ((float)(markFreq - spaceFreq) / (float)sampleFreq) * 
@@ -231,12 +275,21 @@ int main(int argc, const char** argv) {
 
                             cout << "LOCKED ON BINS " << lockedBinMark << "/" << lockedBinSpace << endl;
 
+                            float lockMark = (float)lockedBinMark * (float)sampleFreq / (float)fftN;
+                            float lockSpace = lockedBinSpace * (float)sampleFreq / (float)fftN;
+                            cout << "  " << lockMark << " " << lockSpace << endl;
+
                             // Build the tones needed by the quadrature demodulators
-                            float binScale = (float)demodulatorToneN / (float)fftN;
+                            //float binScale = (float)demodulatorToneN / (float)fftN;
+                            //make_complex_tone_2(demodulatorTone[0], demodulatorToneN, 
+                            //    (float)lockedBinSpace * binScale, demodulatorToneN, 0.5);
+                            //make_complex_tone_2(demodulatorTone[1], demodulatorToneN, 
+                            //    (float)lockedBinMark * binScale, demodulatorToneN, 0.5);
+
                             make_complex_tone_2(demodulatorTone[0], demodulatorToneN, 
-                                (float)lockedBinSpace * binScale, demodulatorToneN, 0.5);
+                                (float)lockedBinSpace, fftN, 0.5);
                             make_complex_tone_2(demodulatorTone[1], demodulatorToneN, 
-                                (float)lockedBinMark * binScale, demodulatorToneN, 0.5);
+                                (float)lockedBinMark, fftN, 0.5);
                         }
                     } else {
                         //cout << blockCount << " " << maxBin << endl;
@@ -293,7 +346,7 @@ int main(int argc, const char** argv) {
 
             // Show the edge to the PLL 
             bool capture = pll.processSample(activeSymbol == 1);
-
+    
             if (frequencyLocked) {
                 //cout << samplePtr << " M: " << symbolCorr[1] << " S: " << symbolCorr[0] << " " << activeSymbol << endl;
                 //cout << samplePtr << " S: " << activeSymbol << " Capture? " << capture << endl;
@@ -303,15 +356,18 @@ int main(int argc, const char** argv) {
             // recovery PLL.
             if (capture) {
 
+                //cout << "  SYMBOL [" << frameBitCount << "] = " << activeSymbol << endl;
+
                 // Bring in the next bit. 
                 frameBitAccumulator <<= 1;
                 frameBitAccumulator |= (activeSymbol == 1) ? 1 : 0;
                 frameBitCount++;
                 
-                if (!inSync) {
+                if (!inDataSync) {
                     // Look for sync frame, or something very close to it.
                     if (abs(Frame30::correlate30(frameBitAccumulator, Frame30::SYNC_FRAME.getRaw())) > 29) {
-                        inSync = true;
+                        //cout << "DATA SYNC ACQUIRED" << endl;
+                        inDataSync = true;
                         frameBitCount = 0;
                     }
                 }
@@ -319,25 +375,39 @@ int main(int argc, const char** argv) {
                 else {
                     if (frameBitCount == 30) {
                         frameBitCount = 0;
+                        frameCount++;
                         Frame30 frame(frameBitAccumulator & Frame30::MASK30LSB);
                         if (!frame.isValid()) {                                            
-                            cout << endl << "WARNING: Invalid frame" << endl;
-                        } 
-                        CodeWord24 cw24 = frame.toCodeWord24();
-                        CodeWord12 cw12 = cw24.toCodeWord12();
-                        Symbol6 sym0 = cw12.getSymbol0();
-                        Symbol6 sym1 = cw12.getSymbol1();
-                        if (sym0.getRaw() != 0) {
-                            outStream << sym0.toAscii();
-                        }
-                        if (sym1.getRaw() != 0) {
-                            outStream << sym1.toAscii();
+                            //cout << "Bad frame " << frameCount << endl;
+                        } else {
+                            //cout << "GOOD FRAME" << endl;
+                            CodeWord24 cw24 = frame.toCodeWord24();
+                            CodeWord12 cw12 = cw24.toCodeWord12();
+                            Symbol6 sym0 = cw12.getSymbol0();
+                            Symbol6 sym1 = cw12.getSymbol1();
+                            if (sym0.getRaw() != 0) {
+                                outStream << sym0.toAscii();
+                            }
+                            if (sym1.getRaw() != 0) {
+                                outStream << sym1.toAscii();
+                            }
                         }
                     }
                 }
             }
+
+            //if (samplePtr > (5 * 60 * 30)) {
+            //    break;
+            //}
         }
         outStream.flush();
         cout << "MESSAGE: " << outStream.str() << endl;
     }
 }
+
+// FIRST DATA FRAME
+//
+// 01111 10000 01111 01000 01010 10001
+// 01234 56789 01234 56789 01234 56789
+
+// DATA SYNC IN 89
