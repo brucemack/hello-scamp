@@ -30,6 +30,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "ClockRecoveryPLL.h"
 #include "fixed_math.h"
 #include "fixed_fft.h"
+#include "TestDemodulatorListener.h"
 
 using namespace std;
 using namespace scamp;
@@ -115,7 +116,8 @@ int main(int argc, const char** argv) {
     // Now decode without any prior knowledge of the frequency or phase
     // of the transmitter.
     {
-        ostringstream outStream;
+        TestDemodulatorListener testListener;
+        DemodulatorListener* listener = &testListener;
 
         ClockRecoveryPLL pll(sampleFreq);
         // NOTICE: We are purposely setting the initial frequency slightly 
@@ -184,10 +186,6 @@ int main(int argc, const char** argv) {
         // Walk through the data one byte at a time.  We do something extra
         // each time we have processed a complete block.
         while (samplePtr < modem2.getSamplesUsed()) {            
-
-            //if (samplePtr % 60 == 0) {
-            //    cout << "------ " << (samplePtr / 60) << endl;
-            //}
 
             const q15 sample = f32_to_q15(samples[samplePtr++]);
             // Capture the sample in the circular buffer            
@@ -261,8 +259,6 @@ int main(int argc, const char** argv) {
                         }
                         maxBinVar /= ((float)blockHistorySize - 1);
                         float maxBinStd = std::sqrt(maxBinVar);
-            
-                        //cout << blockCount << " " << maxBin << " " << maxBinStd << " " << maxBinPowerFract << endl;
 
                         // If the standard deviation is small and the power is large then 
                         // assume we're seeing the "long mark"                
@@ -273,26 +269,16 @@ int main(int argc, const char** argv) {
                                 (float)fftN;
                             float lockedBinSpace = ((float)lockedBinMark - lockedBinSpread);
 
-                            cout << "LOCKED ON BINS " << lockedBinMark << "/" << lockedBinSpace << endl;
-
-                            float lockMark = (float)lockedBinMark * (float)sampleFreq / (float)fftN;
-                            float lockSpace = lockedBinSpace * (float)sampleFreq / (float)fftN;
-                            cout << "  " << lockMark << " " << lockSpace << endl;
-
-                            // Build the tones needed by the quadrature demodulators
-                            //float binScale = (float)demodulatorToneN / (float)fftN;
-                            //make_complex_tone_2(demodulatorTone[0], demodulatorToneN, 
-                            //    (float)lockedBinSpace * binScale, demodulatorToneN, 0.5);
-                            //make_complex_tone_2(demodulatorTone[1], demodulatorToneN, 
-                            //    (float)lockedBinMark * binScale, demodulatorToneN, 0.5);
+                            float lockedMarkHz = (float)lockedBinMark * (float)sampleFreq / (float)fftN;
+                            float lockedSpaceHz = lockedBinSpace * (float)sampleFreq / (float)fftN;
 
                             make_complex_tone_2(demodulatorTone[0], demodulatorToneN, 
                                 (float)lockedBinSpace, fftN, 0.5);
                             make_complex_tone_2(demodulatorTone[1], demodulatorToneN, 
                                 (float)lockedBinMark, fftN, 0.5);
+
+                            listener->frequencyLocked(lockedMarkHz, lockedSpaceHz);
                         }
-                    } else {
-                        //cout << blockCount << " " << maxBin << endl;
                     }
                 }
             }
@@ -346,17 +332,10 @@ int main(int argc, const char** argv) {
 
             // Show the edge to the PLL 
             bool capture = pll.processSample(activeSymbol == 1);
-    
-            if (frequencyLocked) {
-                //cout << samplePtr << " M: " << symbolCorr[1] << " S: " << symbolCorr[0] << " " << activeSymbol << endl;
-                //cout << samplePtr << " S: " << activeSymbol << " Capture? " << capture << endl;
-            }
-            
+                
             // Process the sample if we are told to do so by the data clock
             // recovery PLL.
             if (capture) {
-
-                //cout << "  SYMBOL [" << frameBitCount << "] = " << activeSymbol << endl;
 
                 // Bring in the next bit. 
                 frameBitAccumulator <<= 1;
@@ -366,9 +345,9 @@ int main(int argc, const char** argv) {
                 if (!inDataSync) {
                     // Look for sync frame, or something very close to it.
                     if (abs(Frame30::correlate30(frameBitAccumulator, Frame30::SYNC_FRAME.getRaw())) > 29) {
-                        //cout << "DATA SYNC ACQUIRED" << endl;
                         inDataSync = true;
                         frameBitCount = 0;
+                        listener->dataSyncAcquired()                        ;
                     }
                 }
                 // Here we are consuming real data frames
@@ -377,31 +356,26 @@ int main(int argc, const char** argv) {
                         frameBitCount = 0;
                         frameCount++;
                         Frame30 frame(frameBitAccumulator & Frame30::MASK30LSB);
-                        if (!frame.isValid()) {                                            
-                            //cout << "Bad frame " << frameCount << endl;
+                        if (!frame.isValid()) {      
+                            listener->badFrameReceived(frame.getRaw());
                         } else {
-                            //cout << "GOOD FRAME" << endl;
+                            listener->goodFrameReceived();
                             CodeWord24 cw24 = frame.toCodeWord24();
                             CodeWord12 cw12 = cw24.toCodeWord12();
                             Symbol6 sym0 = cw12.getSymbol0();
                             Symbol6 sym1 = cw12.getSymbol1();
                             if (sym0.getRaw() != 0) {
-                                outStream << sym0.toAscii();
+                                listener->received(sym0.toAscii());
                             }
                             if (sym1.getRaw() != 0) {
-                                outStream << sym1.toAscii();
+                                listener->received(sym1.toAscii());
                             }
                         }
                     }
                 }
             }
-
-            //if (samplePtr > (5 * 60 * 30)) {
-            //    break;
-            //}
         }
-        outStream.flush();
-        cout << "MESSAGE: " << outStream.str() << endl;
+        cout << "MESSAGE: " << testListener.getMessage() << endl;
     }
 }
 
