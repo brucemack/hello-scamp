@@ -7,7 +7,7 @@ RM := rm
 OBJS := build/Symbol6.o build/CodeWord12.o build/CodeWord24.o \
 	build/Frame30.o build/FileModulator.o build/Util.o build/TestModem.o \
 	build/TestModem2.o build/ClockRecoveryPLL.o \
-	build/fixed_math.o build/TestDemodulatorListener.o
+	build/fixed_math.o build/Demodulator.o build/TestDemodulatorListener.o
 
 test:	bin/unit-test-1 bin/unit-test-2 bin/unit-test-3
 	bin/unit-test-1

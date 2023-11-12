@@ -32,6 +32,8 @@ public:
     virtual void goodFrameReceived() { }
     virtual void badFrameReceived(uint32_t rawFrame) { }
     virtual void received(char asciiChar) { }
+    virtual void bitTransitionDetected() { }
+    virtual void receivedBit(bool bit, uint16_t frameBitPos) { }
 };
 
 }

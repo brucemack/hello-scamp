@@ -317,20 +317,19 @@ int main(int argc, const char** argv) {
 
             // Look for an inflection point in the respective correlations 
             // of the symbols.  
-            bool edgeDetected = false;
             if (activeSymbol == 0) {
                 if (symbolCorrAvg[1] > symbolCorrAvg[0]) {
                     activeSymbol = 1;
-                    edgeDetected = true;
+                    listener->bitTransitionDetected();
                 }
             } else {
                 if (symbolCorrAvg[0] > symbolCorrAvg[1]) {
                     activeSymbol = 0;
-                    edgeDetected = true;
+                    listener->bitTransitionDetected();
                 }
             }
 
-            // Show the edge to the PLL 
+            // Show the sample to the PLL for clock recovery
             bool capture = pll.processSample(activeSymbol == 1);
                 
             // Process the sample if we are told to do so by the data clock
@@ -340,6 +339,7 @@ int main(int argc, const char** argv) {
                 // Bring in the next bit. 
                 frameBitAccumulator <<= 1;
                 frameBitAccumulator |= (activeSymbol == 1) ? 1 : 0;
+                listener->receivedBit(activeSymbol == 1, frameBitCount);
                 frameBitCount++;
                 
                 if (!inDataSync) {
@@ -384,4 +384,4 @@ int main(int argc, const char** argv) {
 // 01111 10000 01111 01000 01010 10001
 // 01234 56789 01234 56789 01234 56789
 
-// DATA SYNC IN 89
+// DATA SYNC IN SYMBOL 89
