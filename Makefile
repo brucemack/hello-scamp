@@ -40,6 +40,9 @@ bin/unit-test-7: build/unit-test-7.o build/fixed_math.o build/Symbol6.o \
 	build/Util.o build/TestModem.o build/TestModem2.o build/ClockRecoveryPLL.o
 	g++ -o $@ -L/usr/local/lib $^ 
 
+bin/unit-test-7a: build/unit-test-7a.o $(OBJS)
+	g++ -o $@ -L/usr/local/lib $^ 
+
 bin/unit-test-8: build/unit-test-8.o $(OBJS)
 	g++ -o $@ -L/usr/local/lib $^ 
 

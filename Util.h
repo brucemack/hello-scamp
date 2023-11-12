@@ -58,9 +58,25 @@ void make_complex_tone_2(cq15* output,
 
 float complex_corr(cq15* c0, cq15* c1, uint16_t len);
 
-float complex_corr_2(q15* c0, cq15* c1, uint16_t len);
+/**
+ * This is a convolution function that supports a circular buffer
+ * for the c0 (real) series and a linear buffer for the c1 (complex)
+ * series. This would typically be used to convolve input samples
+ * from an ADC with the complex coefficients of an FIR or quadrature
+ * demodulator.
+ * 
+ * Automatic wrapping is used to avoid going off the end of c0.
+ */
+float complex_corr_2(const q15* c0, uint16_t c0Base, 
+    uint16_t c0Size, const cq15* c1, uint16_t len);
 
 void make_bar(std::ostream& str, unsigned int len);
+
+/**
+ * A utility function for dealing with circular buffers.  Result
+ * is (base + disp) % size.
+*/
+uint16_t wrapIndex(uint16_t base, uint16_t disp, uint16_t size);
 
 void render_spectrum(std::ostream& str, const cq15* x, uint16_t fftN, uint16_t sampleFreq);
 

@@ -127,12 +127,6 @@ int main(int argc, const char** argv) {
         Frame30 frame = Frame30::fromCodeWord24(cw24);
         // Make sure the frame is valid
         assertm(6 == frame.getComplimentCount(), "Frame compliment problem");
-        /*
-        cout << std::hex << "0x" << frame.getRaw() << endl;
-        TestModulator mod;
-        frame.transmit(mod);
-        cout << endl;
-        */
     }
 
     // =========================================================================

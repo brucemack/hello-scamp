@@ -185,14 +185,19 @@ float complex_corr(cq15* c0, cq15* c1, uint16_t len) {
     return std::sqrt(result_r * result_r + result_i * result_i);
 }
 
+uint16_t wrapIndex(uint16_t base, uint16_t disp, uint16_t size) {
+    return (base + disp) % size;
+}
+
 // TODO: CLEAN THIS UP
-float complex_corr_2(q15* c0, cq15* c1, uint16_t len) {
+float complex_corr_2(const q15* c0, uint16_t c0Base, uint16_t c0Size,
+    const cq15* c1, uint16_t len) {
 
     float result_r = 0;
     float result_i = 0;
 
     for (uint16_t i = 0; i < len; i++) {
-        float a = q15_to_f32(c0[i]);
+        float a = q15_to_f32(c0[wrapIndex(c0Base, i, c0Size)]);
         float b = 0;
         float c = q15_to_f32(c1[i].r);
         // Complex conjugate
