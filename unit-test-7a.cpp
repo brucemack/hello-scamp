@@ -18,6 +18,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include <fstream>
 #include <cmath>
 #include <sstream>
+#include <cassert>
 
 #include "Util.h"
 #include "Symbol6.h"
@@ -31,6 +32,9 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "fixed_math.h"
 #include "fixed_fft.h"
 #include "TestDemodulatorListener.h"
+
+// Use (void) to silence unused warnings.
+#define assertm(exp, msg) assert(((void)msg, exp))
 
 using namespace std;
 using namespace scamp;
@@ -67,29 +71,30 @@ int main(int argc, const char** argv) {
 
     // This is a modem that is used to capture the data for printing.
     int8_t printSamples[34 * 30];
-    TestModem modem3(printSamples, sizeof(printSamples), 1);
+    TestModem printModem(printSamples, sizeof(printSamples), 1);
+
+    const char* testMessage = "DE KC1FSZ, GOOD MORNING";
     
     // =========================================================================
     // Make a message, encode it, and then recover it. In this test we are 
     // using the SCAMP FSK (33.3 bits per second) format.  
     {        
-        const char* testMessage = "DE KC1FSZ, GOOD MORNING";
-
         // Encode the message.  This leads to about 25K samples.
         Frame30 frames[32];
         unsigned int frameCount = encodeString(testMessage, frames, 32, true);
     
         // We purposely offset the data stream by a half symbol 
         // to stress the PLL.
-        //modem.sendHalfSilence();
+        modem2.sendHalfSilence();
         // This silence is 30 symbols, or 30 * 60 = 180 samples long
         for (unsigned int i = 0; i < 30; i++)
             modem2.sendSilence();
-        // Transmit a legit message
+        // Transmit the encoded message frames
         for (unsigned int i = 0; i < frameCount; i++) {
             frames[i].transmit(modem2);
-            frames[i].transmit(modem3);
+            frames[i].transmit(printModem);
         }
+        // Trailing silence
         for (unsigned int i = 0; i < 30; i++) {
             modem2.sendSilence();
         }
@@ -98,7 +103,7 @@ int main(int argc, const char** argv) {
     // Display
     {
         cout << endl << "Sending these frames:" << endl;
-        for (uint16_t i = 0; i < modem3.getSamplesUsed(); i++) {
+        for (uint16_t i = 0; i < printModem.getSamplesUsed(); i++) {
             if (i % 30 == 0) {
                 cout << endl;
             }
@@ -376,6 +381,7 @@ int main(int argc, const char** argv) {
             }
         }
         cout << "MESSAGE: " << testListener.getMessage() << endl;
+        assertm(testListener.getMessage() == testMessage, "Message Failure");
     }
 }
 
