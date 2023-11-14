@@ -10,6 +10,7 @@
 #include "SimpleFFT.h"
 #include "Frame30.h"
 #include "TestModem2.h"
+#include "Util.h"
 
 using namespace std;
 using namespace scamp;

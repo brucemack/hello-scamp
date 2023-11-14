@@ -119,7 +119,8 @@ int main(int argc, const char** argv) {
 
         //times_equal(sample_r, hann_window, N);
         
-        FixedFFT<N> fft;
+        q15 trigTable[N];
+        const FixedFFT fft(N, trigTable);
 
         // Make a complex series
         cq15 sample[N];
