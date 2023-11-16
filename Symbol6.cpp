@@ -187,7 +187,7 @@ Symbol6::Symbol6(uint8_t raw)
 :   _raw(raw) {}
 
 Symbol6 Symbol6::fromAscii(char asciiChar) {
-    if (asciiChar >= 0 && asciiChar < 128) {
+    if (asciiChar >= 0) {
         return Symbol6(ASCII8_TO_SCAMP6[(uint8_t)asciiChar]);
     } else {
         return Symbol6(0b111111);
