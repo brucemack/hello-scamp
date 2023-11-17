@@ -46,8 +46,10 @@ int main(int argc, const char** argv) {
     // Make a tone and then apply the FFT
     {
         float samples[512];
-        TestModem2 modem(samples, 512, sample_freq_hz, 512, tone_freq_hz, tone_freq_hz,
+        TestModem2 modem(samples, 512, sample_freq_hz, 256, tone_freq_hz, tone_freq_hz,
             0.5, 0.1);
+        //modem.sendMark();
+        modem.sendSilence();
         modem.sendMark();
 
         // Space for the demodulator to work in (no dynamic memory allocation!)
@@ -66,11 +68,8 @@ int main(int argc, const char** argv) {
 
         fft.transform(x);
         
-        render_spectrum(cout, x, fftN, sample_freq_hz);
-
-        return 0;
+        //render_spectrum(cout, x, fftN, sample_freq_hz);
     }
-
 
     // Demonstrate correlation in phase (real only)
     // Here you can see the correlation is almost 0.5 (highest possible)
@@ -130,6 +129,53 @@ int main(int argc, const char** argv) {
         cq15 lo_sample[N];
         make_complex_tone(lo_sample, N, sample_freq_hz, lo_freq_hz, lo_amp);
         cout << "(Complex) Out of phase " << complex_corr(tone_sample, lo_sample, N) << endl;
+    }
+
+    // Correlate real with complex
+    {
+        float samples[512];
+        //
+        TestModem2 modem(samples, 512, sample_freq_hz, 512, tone_freq_hz, tone_freq_hz,
+            0.5, 0.05);
+        modem.sendMark();
+        
+        uint16_t bin = (tone_freq_hz * 512) / sample_freq_hz;
+        cout << "Bin " << bin << endl;
+        q15 signal[512];
+        for (uint16_t i = 0; i < 512; i++) {
+            signal[i] = f32_to_q15(samples[i]);
+        }
+
+        {
+            cq15 lo_sample[512];
+            make_complex_tone_2(lo_sample, 512, bin - 2, 512, 0.5);
+            float corr = complex_corr_2(signal, 0, 512, lo_sample, 512); 
+            cout << "CORR -2 " << corr << endl;
+        }
+        {
+            cq15 lo_sample[512];
+            make_complex_tone_2(lo_sample, 512, bin - 1, 512, 0.5);
+            float corr = complex_corr_2(signal, 0, 512, lo_sample, 512); 
+            cout << "CORR -1 " << corr << endl;
+        }
+        {
+            cq15 lo_sample[512];
+            make_complex_tone_2(lo_sample, 512, bin, 512, 0.5);
+            float corr = complex_corr_2(signal, 0, 512, lo_sample, 512); 
+            cout << "CORR    " << corr << endl;
+        }
+        {
+            cq15 lo_sample[512];
+            make_complex_tone_2(lo_sample, 512, bin + 1, 512, 0.5);
+            float corr = complex_corr_2(signal, 0, 512, lo_sample, 512); 
+            cout << "CORR +1 " << corr << endl;
+        }
+        {
+            cq15 lo_sample[512];
+            make_complex_tone_2(lo_sample, 512, bin + 2, 512, 0.5);
+            float corr = complex_corr_2(signal, 0, 512, lo_sample, 512); 
+            cout << "CORR +2 " << corr << endl;
+        }
     }
 
     return 0;

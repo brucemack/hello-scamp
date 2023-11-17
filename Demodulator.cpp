@@ -75,8 +75,10 @@ void Demodulator::processSample(q15 sample) {
 
         // Do the FFT in the result buffer, including the window.  
         for (uint16_t i = 0; i < _fftN; i++) {
-            _fftResult[i].r = mult_q15(_buffer[wrapIndex(readBufferPtr, i, _fftN)], 
-                _fftWindow[i]);
+            //_fftResult[i].r = mult_q15(_buffer[wrapIndex(readBufferPtr, i, _fftN)], 
+            //    _fftWindow[i]);
+            _fftResult[i].r = _buffer[wrapIndex(readBufferPtr, i, _fftN)];
+            //    _fftWindow[i]);
             _fftResult[i].i = 0;
         }
 
@@ -88,7 +90,7 @@ void Demodulator::processSample(q15 sample) {
 
          // Capture DC magnitude for diagnostics
         _lastDCPower = _fftResult[0].mag_f32_squared();
-
+ 
         // If we are not yet frequency locked, try to lock
         if (!_frequencyLocked) {
 
@@ -160,7 +162,10 @@ void Demodulator::processSample(q15 sample) {
                     make_complex_tone_2(_demodulatorTone[1], _demodulatorToneN, 
                         (float)_lockedBinMark, _fftN, 0.5);
 
-                    _listener->frequencyLocked(lockedMarkHz, lockedSpaceHz);
+                    _listener->frequencyLocked(lockedMarkHz, lockedSpaceHz);                    
+                    //cout << "Locked at block " << _blockCount << endl;
+                    //render_spectrum(cout, _fftResult, _fftN, _sampleFreq);
+                    //exit(0); 
                 }
             }
         }

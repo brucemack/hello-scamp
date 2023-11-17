@@ -50,7 +50,7 @@ const unsigned int spaceFreq = 600;
 
 // Here we can inject a tuning error to show that the demodulator will
 // still find the signal.
-const unsigned int tuningErrorHz = 100;
+const unsigned int tuningErrorHz = 0;
 const unsigned int S = 34 * 30 * samplesPerSymbol;
 static float samples[S];
 
@@ -70,7 +70,7 @@ int main(int, const char**) {
     // This is the modem used for the demonstration.  Samples
     // are written to a memory buffer.
     TestModem2 modem2(samples, S, sampleFreq, samplesPerSymbol, 
-        markFreq + tuningErrorHz, spaceFreq + tuningErrorHz, 0.5, 0.01);
+        markFreq + tuningErrorHz, spaceFreq + tuningErrorHz, 0.4, 0.05);
 
     // This is a modem that is used to capture the data for printing.
     int8_t printSamples[34 * 30];
@@ -89,7 +89,7 @@ int main(int, const char**) {
     
         // We purposely offset the data stream by a half symbol 
         // to stress the PLL.
-        modem2.sendHalfSilence();
+        //modem2.sendHalfSilence();
         // This silence is 30 symbols, or 30 * 60 = 180 samples long
         for (unsigned int i = 0; i < 30; i++)
             modem2.sendSilence();
