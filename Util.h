@@ -88,7 +88,7 @@ void render_spectrum(std::ostream& str, const cq15* x, uint16_t fftN, uint16_t s
  * it using the modulator provided.
  */
 uint16_t modulateMessage(const char* asciiMsg, Modulator& mod,  
-    const uint16_t maxFrames);
+    Frame30* frames, const uint16_t maxFrames);
 }
 
 #endif

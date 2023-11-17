@@ -224,9 +224,7 @@ float complex_corr_2(const q15* c0, uint16_t c0Base, uint16_t c0Size,
 }
 
 uint16_t modulateMessage(const char* asciiMsg, Modulator& mod,
-    const uint16_t maxFrames) {
-    // Encode the message.  This leads to about 25K samples.
-    Frame30 frames[maxFrames];
+    Frame30* frames, uint16_t maxFrames) {
     uint16_t frameCount = encodeString(asciiMsg, frames, maxFrames, true);
     // Transmit the encoded message frames
     for (unsigned int i = 0; i < frameCount; i++) {
