@@ -173,7 +173,6 @@ int main(int, const char**) {
         bool frequencyLocked = false;
         uint16_t lockedBinMark = 0;
         uint16_t blockCount = 0;
-        //uint16_t blockPtr = 0;
         uint16_t activeSymbol = 0;
 
         bool inDataSync = false;
