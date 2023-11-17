@@ -24,25 +24,16 @@ namespace scamp {
 ClockRecoveryPLL::ClockRecoveryPLL(unsigned int sampleRate) 
 :   _idle(true),
     _sampleRate(sampleRate),
-    _phi(0),
     // The target phase is 1/4 of the total range of uint16_t. We 
     // choose this phase so that 1/2 of the total range will fall
     // in the middle of a bit.
     _targetPhi((1L << 16) / 4),
-    _omega(0),
-    _Kp(7),
-    _Ki(10),
     // Offset is based on the expected frequency and reduces the 
     // workload on the integrator.
     // The initial bit frequency is set close to the SCAMP FSK rate
     // of 33.3 bits per second, or 60 samples per bit on a 2,000 kHz
     // sample clock.
-    _offset((1L << 16) / 60),
-    _integration(0),
-    _lastPhi(0),
-    _lastSample(false),
-    _lastError(0),
-    _samplesSinceEdge(0) {
+    _offset((1L << 16) / 60) {
 }
 
 void ClockRecoveryPLL::setBitFrequencyHint(unsigned int bitFrequency) {
@@ -57,15 +48,11 @@ uint32_t ClockRecoveryPLL::getFrequency() const {
 }
 
 bool ClockRecoveryPLL::processSample(bool mark) {
-
-    int sample = mark ? 1 : -1;
-    bool edge = false;
     
     // Look for the edge.  Only on edges do we adjust the phase.
     if (_lastSample != mark) {        
         _lastSample = mark;
         _samplesSinceEdge = 0;
-        edge = true;
         // When coming in from idle, pretend like we are perfectly in sync to 
         // avoid a huge initial error.
         if (_idle) {

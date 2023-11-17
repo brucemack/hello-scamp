@@ -26,23 +26,35 @@ TestModem::TestModem(int8_t* samples, unsigned int samplesSize, unsigned int sam
 }
 
 void TestModem::sendSilence() {
-    for (unsigned int i = 0; i < _samplesPerSymbol; i++) 
-        _samples[_samplesUsed++] = 0;
+    for (unsigned int i = 0; i < _samplesPerSymbol; i++) {
+        if (_samplesUsed < _samplesSize) {
+            _samples[_samplesUsed++] = 0;
+        }
+    }
 }
 
 void TestModem::sendHalfSilence() {
-    for (unsigned int i = 0; i < _samplesPerSymbol / 2; i++) 
-        _samples[_samplesUsed++] = 0;
+    for (unsigned int i = 0; i < _samplesPerSymbol / 2; i++) {
+        if (_samplesUsed < _samplesSize) {
+            _samples[_samplesUsed++] = 0;
+        }
+    }
 }
 
 void TestModem::sendMark() {
-    for (unsigned int i = 0; i < _samplesPerSymbol; i++) 
-        _samples[_samplesUsed++] = 1;
+    for (unsigned int i = 0; i < _samplesPerSymbol; i++) {
+        if (_samplesUsed < _samplesSize) {
+            _samples[_samplesUsed++] = 1;
+        }
+    }
 }
 
 void TestModem::sendSpace() {
-    for (unsigned int i = 0; i < _samplesPerSymbol; i++) 
-        _samples[_samplesUsed++] = -1;
+    for (unsigned int i = 0; i < _samplesPerSymbol; i++) {
+        if (_samplesUsed < _samplesSize) {
+            _samples[_samplesUsed++] = -1;
+        }
+    }
 }
 
 }

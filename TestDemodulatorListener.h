@@ -33,6 +33,8 @@ public:
     virtual void dataSyncAcquired();
     virtual void frequencyLocked(uint16_t markFreq, uint16_t spaceFreq);
     virtual void badFrameReceived(uint32_t rawFrame);
+    virtual void goodFrameReceived();
+
     virtual void received(char asciiChar);
 
     std::string getMessage() const;

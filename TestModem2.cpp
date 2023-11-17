@@ -29,7 +29,6 @@ TestModem2::TestModem2(float* samples, unsigned int samplesSize,
 :   _samples(samples),
     _samplesSize(samplesSize),
     _sampleRate(sampleRate),
-    _samplesUsed(0),
     _samplesPerSymbol(samplesPerSymbol),
     _markFreq(markFreq),
     _spaceFreq(spaceFreq) {

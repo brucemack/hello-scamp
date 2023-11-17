@@ -26,6 +26,8 @@ namespace scamp {
     class Modulator {
     public:
 
+        virtual ~Modulator() { }
+
         virtual void sendSilence() { }
 
         /**

@@ -31,6 +31,7 @@ public:
     TestModem2(float* samples, unsigned int samplesSize, unsigned int sampleRate,
         unsigned int samplesPerSymbol,
         unsigned int markFreq, unsigned int spaceFreq);
+    virtual ~TestModem2() { }
 
     virtual void sendSilence();
     virtual void sendHalfSilence();
@@ -43,12 +44,12 @@ private:
 
     float* _samples;
     unsigned int _samplesSize;
-    uint32_t _samplesUsed;
+    uint32_t _samplesUsed = 0;
     unsigned int _sampleRate;
     unsigned int _samplesPerSymbol;
     unsigned int _markFreq;
     unsigned int _spaceFreq;
-    float _phi;
+    float _phi = 0;
 };
 
 }

@@ -41,6 +41,9 @@ void render_spectrum(ostream& str, const cq15* x, uint16_t fftN, uint16_t sample
     const float b_max_power = x[b].mag_f32_squared();
     const unsigned int b_max_hz = (b * sampleFreq) / fftN;
 
+    str << "Max Power " << b_max_power << endl;
+    str << "Max Freq  " << b_max_hz << endl;
+
     // Display a spectrum
     for (uint16_t i = 1; i < fftN / 2; i++) {
         const float frac = x[i].mag_f32_squared() / b_max_power;
@@ -102,7 +105,6 @@ void visitTone(const unsigned int len, uint16_t sample_freq_hz, uint16_t tone_fr
 
     float omega = 2.0f * PI * ((float)tone_freq_hz / (float)sample_freq_hz);
     float phi = 2.0f * PI * ((float)phaseDegrees / 360.0);
-    float max_amp = 0;
 
     for (unsigned int i = 0; i < len; i++) {
         float sig = std::cos(phi) * amplitude;
@@ -137,7 +139,6 @@ void make_complex_tone(cq15* output,
 
     float omega = 2.0f * PI * (tone_freq_hz / sample_freq_hz);
     float phi = 2.0f * PI * (phaseDegrees / 360.0);
-    float max_amp = 0;
 
     for (unsigned int i = 0; i < len; i++) {
         float sig_i = std::cos(phi) * amplitude;
@@ -154,7 +155,6 @@ void make_complex_tone_2(cq15* output,
 
     float omega = 2.0f * PI * bin / (float)binCount;
     float phi = 2.0f * PI * (phaseDegrees / 360.0);
-    float max_amp = 0;
 
     for (uint32_t i = 0; i < len; i++) {
         float sig_i = std::cos(phi) * amplitude;
@@ -190,17 +190,21 @@ float complex_corr(cq15* c0, cq15* c1, uint16_t len) {
 }
 
 uint16_t wrapIndex(uint16_t base, uint16_t disp, uint16_t size) {
-    return (base + disp) % size;
+    uint16_t r = (base + disp) % size;
+    if (r >= size) {
+        cout << "ERROR!" << endl;
+    }
+    return r;
 }
 
 // TODO: CLEAN THIS UP
 float complex_corr_2(const q15* c0, uint16_t c0Base, uint16_t c0Size,
-    const cq15* c1, uint16_t len) {
+    const cq15* c1, uint16_t c1Len) {
 
     float result_r = 0;
     float result_i = 0;
 
-    for (uint16_t i = 0; i < len; i++) {
+    for (uint16_t i = 0; i < c1Len; i++) {
         float a = q15_to_f32(c0[wrapIndex(c0Base, i, c0Size)]);
         float b = 0;
         float c = q15_to_f32(c1[i].r);
@@ -212,8 +216,8 @@ float complex_corr_2(const q15* c0, uint16_t c0Base, uint16_t c0Size,
         float a_plus_b = a + b;
         float c_plus_d = c + d;
         float p0 = a_plus_b * c_plus_d;
-        result_r += (ac - bd) / (float)len;
-        result_i += (p0 - ac - bd) / (float)len;
+        result_r += (ac - bd) / (float)c1Len;
+        result_i += (p0 - ac - bd) / (float)c1Len;
     }
 
     return std::sqrt(result_r * result_r + result_i * result_i);

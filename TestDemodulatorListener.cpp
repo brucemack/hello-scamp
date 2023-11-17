@@ -42,4 +42,8 @@ string TestDemodulatorListener::getMessage() const {
     return _out.str();
 }
 
+void TestDemodulatorListener::goodFrameReceived() {
+    cout << "GOOD FRAME" << endl;
+}
+
 }

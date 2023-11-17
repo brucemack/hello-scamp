@@ -28,16 +28,16 @@ typedef int16_t q15;
 
 #define abs_q15(a) abs(a) 
 
-#define q15_to_f32(a) ((float)(a) / 32768.0)
-#define f32_to_q15(a) ((q15)((a) * 32768.0)) 
+#define q15_to_f32(a) ((float)(a) / 32768.0f)
+#define f32_to_q15(a) ((q15)((a) * 32768.0f)) 
 #define int_to_q15(a) ((q15)(a << 15))
 #define q15_to_int(a) ((int)(a >> 15))
 #define char_to_q15(a) (q15)(((q15)(a)) << 15)
 
 struct cq15 {
 
-    q15 r;
-    q15 i;
+    q15 r = 0;
+    q15 i = 0;
     
     float mag_f32() const {
         float ref = q15_to_f32(r);
@@ -67,19 +67,6 @@ q15 corr_q15(q15* d0, q15* d1, uint16_t len);
 /**
  * Returns the index with the maximum magnitude.
  */
-static uint16_t max_idx(const cq15* sample, uint16_t start, uint16_t len) {
-    float max_mag = 0;
-    unsigned int max_bin = 0;
-    for (unsigned int i = 0; i < len; i++) {
-        if (i >= start) {
-            float m = sample[i].mag_f32();
-            if (m > max_mag) {
-                max_mag = m;
-                max_bin = i;
-            }
-        }
-    }
-    return max_bin;
-}
+uint16_t max_idx(const cq15* sample, uint16_t start, uint16_t len);
 
 #endif

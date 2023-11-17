@@ -4,6 +4,7 @@ cmake_minimum_required(VERSION 3.13)
 project(hello-scamp C CXX ASM)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 17)
+add_compile_options(-fstack-protector-all -Wall -g)
 
 # Desktop build
 add_executable(unit-test-7a
@@ -15,7 +16,6 @@ add_executable(unit-test-7a
   Demodulator.cpp TestDemodulatorListener.cpp
 )
 
-add_compile_options(-fstack-protector-all -Wpedantic)
 # PICO build
 #pico_sdk_init()
 

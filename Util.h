@@ -71,7 +71,7 @@ float pi();
  * Automatic wrapping is used to avoid going off the end of c0.
  */
 float complex_corr_2(const q15* c0, uint16_t c0Base, 
-    uint16_t c0Size, const cq15* c1, uint16_t len);
+    uint16_t c0Size, const cq15* c1, uint16_t c1Len);
 
 void make_bar(std::ostream& str, unsigned int len);
 

@@ -34,8 +34,8 @@ Demodulator::Demodulator(DemodulatorListener* listener,
     _fftN(fftN),
     _fft(fftN, fftTrigTable),
     _fftWindow(fftWindow),
-    _buffer(bufferSpace),
-    _pll(sampleFreq) { 
+    _pll(sampleFreq),
+    _buffer(bufferSpace) { 
 
     // NOTICE: We are purposely setting the initial frequency slightly 
     // wrong to show that PLL will adjust accordingly.

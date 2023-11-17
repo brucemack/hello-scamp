@@ -43,3 +43,18 @@ cq15 cq15::mult(cq15 c0, cq15 c1) {
     result.i = p0 - ac - bd;
     return result;
 }
+
+uint16_t max_idx(const cq15* sample, uint16_t start, uint16_t len) {
+    float max_mag = 0;
+    unsigned int max_bin = 0;
+    for (unsigned int i = 0; i < len; i++) {
+        if (i >= start) {
+            float m = sample[i].mag_f32();
+            if (m > max_mag) {
+                max_mag = m;
+                max_bin = i;
+            }
+        }
+    }
+    return max_bin;
+}

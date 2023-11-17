@@ -68,18 +68,18 @@ namespace scamp {
         void _edgeDetected();
         
         bool _idle;
-        uint16_t _sampleRate;
-        int32_t _integration;
-        int16_t _omega;
-        uint16_t _phi;
+        const uint16_t _sampleRate;
+        int32_t _integration = 0;
+        int16_t _omega = 0;
+        uint16_t _phi = 0;
         uint16_t _targetPhi;
-        int16_t _Kp;
-        int16_t _Ki;
+        const int16_t _Kp = 7;
+        const int16_t _Ki = 10;
         int16_t _offset;
-        int32_t _lastError;
-        uint16_t _lastPhi;
-        bool _lastSample;
-        uint16_t _samplesSinceEdge;
+        int32_t _lastError = 0;
+        uint16_t _lastPhi = 0;
+        bool _lastSample = false;
+        uint16_t _samplesSinceEdge = 0;
     };
 };
 

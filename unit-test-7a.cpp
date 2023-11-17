@@ -56,7 +56,13 @@ static float samples[S];
 const uint16_t fftN = 512;
 static q15 buffer[fftN];
 
-int main(int argc, const char** argv) {
+int main(int, const char**) {
+
+    // Clear
+    for (unsigned int i = 0; i < S; i++)
+        samples[i] = 0;
+    for (unsigned int i = 0; i < fftN; i++)
+        buffer[i] = 0;
 
     cout << "SCAMP Modem Demonstration 7a" << endl;
     cout << "  Sample Freq    : " << sampleFreq << endl;
@@ -82,6 +88,7 @@ int main(int argc, const char** argv) {
         // Encode the message.  This leads to about 25K samples.
         Frame30 frames[32];
         unsigned int frameCount = encodeString(testMessage, frames, 32, true);
+        assertm(frameCount < 32, "FRAME COUNT");
     
         // We purposely offset the data stream by a half symbol 
         // to stress the PLL.
@@ -166,7 +173,7 @@ int main(int argc, const char** argv) {
         bool frequencyLocked = false;
         uint16_t lockedBinMark = 0;
         uint16_t blockCount = 0;
-        uint16_t blockPtr = 0;
+        //uint16_t blockPtr = 0;
         uint16_t activeSymbol = 0;
 
         bool inDataSync = false;
@@ -187,6 +194,13 @@ int main(int argc, const char** argv) {
         const uint16_t symbolCorrFilterN = 4;
         uint16_t symbolCorrFilterPtr = 0;
         float symbolCorrFilter[symbolCount][symbolCorrFilterN];
+
+        // Initialize
+        for (unsigned int i = 0; i < symbolCount; i++) {
+            for (unsigned int j = 0; j < symbolCorrFilterN; j++) {
+                symbolCorrFilter[i][j] = 0;
+            }
+        }
 
         // Walk through the data one byte at a time.  We do something extra
         // each time we have processed a complete block.
@@ -217,7 +231,7 @@ int main(int argc, const char** argv) {
                 // Find the largest power. Notice that we ignore bin 0 (DC)
                 // since that's not relevant.
                 const uint16_t maxBin = max_idx(x, 1, fftN / 2);
-                const unsigned int maxFreq = fft.binToFreq(maxBin, sampleFreq);
+                //const unsigned int maxFreq = fft.binToFreq(maxBin, sampleFreq);
 
                 // If we are not yet frequency locked, try to lock
                 if (!frequencyLocked) {
@@ -292,11 +306,21 @@ int main(int argc, const char** argv) {
 
             // Figure out the detection starting point. Back up the length of the 
             // demodulator series, wrapping as necessary.
-            uint16_t demodulatorStart = (((int16_t)fftN + (int16_t)readBufferPtr - 
-                (int16_t)demodulatorToneN)) % fftN;
+            // 
+            // TEST CASE 2: fftN = 512, demodToneN = 16, readBufferPtr = 15
+            // We need to start at 511.  Gap = 16-15 = 1, start = 512 - 1
+            //
+            uint16_t demodulatorStart = 0;
+            if (readBufferPtr >= demodulatorToneN) {
+                demodulatorStart = readBufferPtr - demodulatorToneN;
+            } else {
+                uint16_t gap = demodulatorToneN - readBufferPtr;
+                demodulatorStart = fftN - gap;
+            }
             // Correlate recent history with each of the symbol tones
             float symbolCorr[symbolCount];
             for (uint16_t s = 0; s < symbolCount; s++) {
+                // HERE WE HAVE AUTOMATIC WRAPPING
                 symbolCorr[s] = complex_corr_2(buffer, demodulatorStart, fftN, 
                     demodulatorTone[s], demodulatorToneN);
                 // Here we keep track of some recent history of the symbol 
@@ -380,6 +404,9 @@ int main(int argc, const char** argv) {
                 }
             }
         }
+
+        cout << "FRAMES: " << frameCount << endl;
+        cout << "PLL: " << pll.getIntegration() << endl;
         cout << "MESSAGE: " << testListener.getMessage() << endl;
         assertm(testListener.getMessage() == testMessage, "Message Failure");
     }
