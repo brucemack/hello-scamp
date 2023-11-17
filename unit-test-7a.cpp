@@ -43,6 +43,7 @@ using namespace scamp;
 // ------ Data Area -------
 
 const unsigned int sampleFreq = 2000;
+const uint16_t lowFreq = 100;
 const unsigned int samplesPerSymbol = 60;
 const unsigned int markFreq = 667;
 const unsigned int spaceFreq = 600;
@@ -69,7 +70,7 @@ int main(int, const char**) {
     // This is the modem used for the demonstration.  Samples
     // are written to a memory buffer.
     TestModem2 modem2(samples, S, sampleFreq, samplesPerSymbol, 
-        markFreq + tuningErrorHz, spaceFreq + tuningErrorHz);
+        markFreq + tuningErrorHz, spaceFreq + tuningErrorHz, 0.5, 0.01);
 
     // This is a modem that is used to capture the data for printing.
     int8_t printSamples[34 * 30];
@@ -124,13 +125,15 @@ int main(int, const char**) {
     // Now decode without any prior knowledge of the frequency or phase
     // of the transmitter.
     {
+        // Space for the demodulator to work in (no dynamic memory allocation!)
         q15 trigTable[fftN];
         q15 window[fftN];
         q15 buffer[fftN];
         cq15 fftResult[fftN];
 
         TestDemodulatorListener testListener;
-        Demodulator demod(&testListener, sampleFreq, fftN, trigTable, window, fftResult, buffer);
+        Demodulator demod(&testListener, sampleFreq, lowFreq, fftN, 
+            trigTable, window, fftResult, buffer);
 
         // Walk through the data one byte at a time.  We do something extra
         // each time we have processed a complete block.
@@ -140,9 +143,10 @@ int main(int, const char**) {
             demod.processSample(sample);
         }
 
-        cout << "FRAMES: " << demod.getFrameCount() << endl;
-        cout << "PLL: " << demod.getPLLIntegration() << endl;
-        cout << "MESSAGE: " << testListener.getMessage() << endl;
+        cout << "FRAMES  : " << demod.getFrameCount() << endl;
+        cout << "PLL     : " << demod.getPLLIntegration() << endl;
+        cout << "LAST DC : " << demod.getLastDCPower() << endl;
+        cout << "MESSAGE : " << testListener.getMessage() << endl;
         assertm(testListener.getMessage() == testMessage, "Message Failure");
     }
 }

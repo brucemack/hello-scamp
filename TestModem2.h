@@ -23,14 +23,15 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 namespace scamp {
 
 /**
- * Modulation has amplitude of 1.0 and is centered at 0.0
+ * Modulates into a memory buffer.
  */
 class TestModem2 : public Modulator {
 public:
 
     TestModem2(float* samples, unsigned int samplesSize, unsigned int sampleRate,
         unsigned int samplesPerSymbol,
-        unsigned int markFreq, unsigned int spaceFreq);
+        unsigned int markFreq, unsigned int spaceFreq,
+        float amp, float dcBias);
     virtual ~TestModem2() { }
 
     virtual void sendSilence();
@@ -49,6 +50,8 @@ private:
     unsigned int _samplesPerSymbol;
     unsigned int _markFreq;
     unsigned int _spaceFreq;
+    float _amp;
+    float _dcBias;
     float _phi = 0;
 };
 

@@ -17,6 +17,8 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include <iostream>
 #include "Util.h"
 #include "fixed_math.h"
+#include "fixed_fft.h"
+#include "TestModem2.h"
 
 using namespace std;
 using namespace scamp;
@@ -34,11 +36,41 @@ float corr(q15* data, q15* carrier, uint16_t len) {
 int main(int argc, const char** argv) {
 
     const uint16_t N = 1024;
+    const uint16_t fftN = 512;
     float sample_freq_hz = 2000.0;
     float tone_freq_hz = 670.0;
     float tone_amp = 1.0;
     float lo_freq_hz = 670.0;
     float lo_amp = 1.0;
+
+    // Make a tone and then apply the FFT
+    {
+        float samples[512];
+        TestModem2 modem(samples, 512, sample_freq_hz, 512, tone_freq_hz, tone_freq_hz,
+            0.5, 0.1);
+        modem.sendMark();
+
+        // Space for the demodulator to work in (no dynamic memory allocation!)
+        q15 trigTable[fftN];
+        q15 window[fftN];
+        q15 buffer[fftN];
+        cq15 fftResult[fftN];
+        FixedFFT fft(fftN, trigTable);
+
+        cq15 x[fftN];
+        // Do the FFT in the result buffer, including the window.  
+        for (uint16_t i = 0; i < fftN; i++) {
+            x[i].r = f32_to_q15(samples[i]);
+            x[i].i = 0;
+        }
+
+        fft.transform(x);
+        
+        render_spectrum(cout, x, fftN, sample_freq_hz);
+
+        return 0;
+    }
+
 
     // Demonstrate correlation in phase (real only)
     // Here you can see the correlation is almost 0.5 (highest possible)

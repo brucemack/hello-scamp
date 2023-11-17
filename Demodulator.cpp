@@ -15,23 +15,29 @@ You should have received a copy of the GNU General Public License along with
 this program. If not, see <https://www.gnu.org/licenses/>.
 */
 #include <cstdint>
+#include <iostream>
 
 #include "Util.h"
 #include "Demodulator.h"
 
+using namespace std;
+
 namespace scamp {
 
 Demodulator::Demodulator(DemodulatorListener* listener, 
-    uint16_t sampleFreq, uint16_t fftN, q15* fftTrigTable, q15* fftWindow,
+    uint16_t sampleFreq, uint16_t lowestFreq, uint16_t fftN, q15* fftTrigTable, q15* fftWindow,
     cq15* fftResultSpace, q15* bufferSpace)
 :   _listener(listener),
     _sampleFreq(sampleFreq),
     _fftN(fftN),
+    _firstBin((fftN * lowestFreq) / sampleFreq),
     _fftWindow(fftWindow),
     _fftResult(fftResultSpace),
     _fft(fftN, fftTrigTable),
     _pll(sampleFreq),
     _buffer(bufferSpace) { 
+
+    cout << "First Bin " << _firstBin << endl;
 
     // NOTICE: We are purposely setting the initial frequency slightly 
     // wrong to show that PLL will adjust accordingly.
@@ -40,12 +46,17 @@ Demodulator::Demodulator(DemodulatorListener* listener,
     // Build the Hann window for the FFT (raised cosine)
     for (uint16_t i = 0; i < _fftN; i++) {
         _fftWindow[i] = f32_to_q15(0.5 * (1.0 - std::cos(2.0 * pi() * ((float) i) / ((float)_fftN))));
+        //_fftWindow[i] = 0;
     }
 
     memset((void*)_buffer, 0, _fftN);
     memset((void*)_maxBinHistory, 0, sizeof(_maxBinHistory));
     memset((void*)_demodulatorTone, 0, sizeof(_demodulatorTone));
     memset((void*)_symbolCorrFilter, 0, sizeof(_symbolCorrFilter));
+}
+
+void Demodulator::setFrequencyLock(bool lock) {
+    _frequencyLocked = lock;
 }
 
 void Demodulator::processSample(q15 sample) {
@@ -62,7 +73,7 @@ void Demodulator::processSample(q15 sample) {
         
         _blockCount++;
 
-        // Do the FFT in a the result buffer, including the window.  
+        // Do the FFT in the result buffer, including the window.  
         for (uint16_t i = 0; i < _fftN; i++) {
             _fftResult[i].r = mult_q15(_buffer[wrapIndex(readBufferPtr, i, _fftN)], 
                 _fftWindow[i]);
@@ -71,16 +82,19 @@ void Demodulator::processSample(q15 sample) {
 
         _fft.transform(_fftResult);
 
-        // Find the largest power. Notice that we ignore bin 0 (DC)
-        // since that's not relevant.
-        const uint16_t maxBin = max_idx(_fftResult, 1, _fftN / 2);
+        // Find the largest power. Notice that we ignore some low bins (DC)
+        // since that's not relevant to the spectral analysis.
+        const uint16_t maxBin = max_idx(_fftResult, _firstBin, _fftN / 2);
+
+         // Capture DC magnitude for diagnostics
+        _lastDCPower = _fftResult[0].mag_f32_squared();
 
         // If we are not yet frequency locked, try to lock
         if (!_frequencyLocked) {
 
             // Find the total power
             float totalPower = 0;
-            for (uint16_t i = 0; i < _fftN / 2; i++) {
+            for (uint16_t i = _firstBin; i < _fftN / 2; i++) {
                 totalPower += _fftResult[i].mag_f32_squared();
             }
             // Find the percentage of power at the max (and two adjacent)

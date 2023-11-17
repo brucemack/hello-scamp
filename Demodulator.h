@@ -28,13 +28,22 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 namespace scamp {
 
+/**
+ * This contains all of the SCAMP demodulator logic.  This is a stateful
+ * object that will be called once every sample interval with the latest
+ * available sample.
+ */
 class Demodulator {
 public:
 
-    Demodulator(DemodulatorListener* listener, uint16_t sampleFreq, uint16_t fftN,
+    Demodulator(DemodulatorListener* listener, uint16_t sampleFreq, uint16_t lowestFreq,
+        uint16_t fftN,
         q15* fftTrigTableSpace, q15* fftWindowSpace, cq15* fftResultSpace, 
         q15* bufferSpace);
 
+    /**
+     * Call this depending on the mode being used.
+     */
     void setSymbolSpread(uint16_t spreadHz){ _symbolSpreadHz = spreadHz; };
 
     /**
@@ -43,14 +52,19 @@ public:
      */
     void processSample(q15 sample);
 
+    void setFrequencyLock(bool lock);
+
     uint16_t getFrameCount() const { return _frameCount; };
     int32_t getPLLIntegration() const { return _pll.getIntegration(); };
+    float getLastDCPower() const { return _lastDCPower; };
 
 private: 
 
     DemodulatorListener* _listener;
     const uint16_t _sampleFreq;
     const uint16_t _fftN;
+    // This is the first bin that we pay attention to
+    uint16_t _firstBin;
     q15* _fftWindow;
     cq15* _fftResult;
     FixedFFT _fft;
@@ -79,6 +93,8 @@ private:
     // up enough to run the spectral analysis.
     uint32_t _bufferPtr = 0;
     q15* _buffer; 
+
+    float _lastDCPower = 0;
 
     // This is where we store the recent history of the loudest bin 
     const uint16_t _maxBinHistorySize = 64;

@@ -23,20 +23,13 @@ Tom Roberts, and Malcolm Slaney (malcolm@interval.com).
 #include <cassert>
 #include "fixed_fft.h"
 
-static uint16_t _check(uint16_t v) {
-    if (v > 511)  {
-        assert(false);
-    }
-    return v;
-}
-
-#define CHK(x) (_check(x))
+#define CHK(x,y) (x)
 
 FixedFFT::FixedFFT(uint16_t n, q15* trigTable)
 :   N(n),
     _cosTable(trigTable) {
     for (uint16_t i = 0; i < N; i++) {
-        _cosTable[CHK(i)] = f32_to_q15(std::sin(TWO_PI * ((float) i) / (float)N));
+        _cosTable[CHK(i, N)] = f32_to_q15(std::sin(TWO_PI * ((float) i) / (float)N));
     }
 }
 
@@ -80,12 +73,12 @@ void FixedFFT::transform(cq15 f[]) const {
 
         // Swap the bit-reversed indices
         tr = f[m].r;
-        f[CHK(m)].r = f[mr].r;
-        f[CHK(mr)].r = tr;
+        f[CHK(m,N)].r = f[mr].r;
+        f[CHK(mr,N)].r = tr;
 
         ti = f[m].i;
-        f[CHK(m)].i = f[mr].i;
-        f[CHK(mr)].i = ti;
+        f[CHK(m,N)].i = f[mr].i;
+        f[CHK(mr,N)].i = ti;
     }
 
     // -----------------------------------------------------------------------
@@ -106,9 +99,9 @@ void FixedFFT::transform(cq15 f[]) const {
             // Lookup the trig values for that element
             j = m << k;                
             // cos(2PI m/N)
-            q15 wr = _cosTable[CHK(j + N / 4)]; 
+            q15 wr = _cosTable[CHK(j + N / 4,N)]; 
             // sin(2PI m/N)
-            q15 wi = -_cosTable[CHK(j)];                 
+            q15 wi = -_cosTable[CHK(j,N)];                 
             // Divide by two
             wr >>= 1;                          
             // Divide by two
@@ -118,16 +111,16 @@ void FixedFFT::transform(cq15 f[]) const {
                 // j gets the index of the FFT element being combined with i
                 j = i + L;
                 // Compute the trig terms (bottom half of the above matrix)
-                tr = mult_q15(wr, f[CHK(j)].r) - mult_q15(wi, f[CHK(j)].i);
-                ti = mult_q15(wr, f[CHK(j)].i) + mult_q15(wi, f[CHK(j)].r);
+                tr = mult_q15(wr, f[CHK(j,N)].r) - mult_q15(wi, f[CHK(j,N)].i);
+                ti = mult_q15(wr, f[CHK(j,N)].i) + mult_q15(wi, f[CHK(j,N)].r);
                 // Divide ith index elements by two (top half of above matrix)
-                q15 qr = f[CHK(i)].r >> 1;
-                q15 qi = f[CHK(i)].i >> 1;
+                q15 qr = f[CHK(i,N)].r >> 1;
+                q15 qi = f[CHK(i,N)].i >> 1;
                 // Compute the new values at each index
-                f[CHK(j)].r = qr - tr;
-                f[CHK(j)].i = qi - ti;
-                f[CHK(i)].r = qr + tr;
-                f[CHK(i)].i = qi + ti;
+                f[CHK(j,N)].r = qr - tr;
+                f[CHK(j,N)].i = qi - ti;
+                f[CHK(i,N)].r = qr + tr;
+                f[CHK(i,N)].i = qi + ti;
             }    
         }
         --k;

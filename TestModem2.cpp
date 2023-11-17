@@ -25,19 +25,21 @@ namespace scamp {
 TestModem2::TestModem2(float* samples, unsigned int samplesSize, 
     unsigned int sampleRate,
     unsigned int samplesPerSymbol,
-    unsigned int markFreq, unsigned int spaceFreq) 
+    unsigned int markFreq, unsigned int spaceFreq, float amp, float dcBias) 
 :   _samples(samples),
     _samplesSize(samplesSize),
     _sampleRate(sampleRate),
     _samplesPerSymbol(samplesPerSymbol),
     _markFreq(markFreq),
-    _spaceFreq(spaceFreq) {
+    _spaceFreq(spaceFreq),
+    _amp(amp),
+    _dcBias(dcBias) {
 }
 
 void TestModem2::sendSilence() {
     for (unsigned int i = 0; i < _samplesPerSymbol; i++) {
         if (_samplesUsed < _samplesSize) {
-            _samples[_samplesUsed++] = 0;
+            _samples[_samplesUsed++] = _dcBias;
         }
     }
 }
@@ -45,7 +47,7 @@ void TestModem2::sendSilence() {
 void TestModem2::sendHalfSilence() {
     for (unsigned int i = 0; i < _samplesPerSymbol / 2; i++) {
         if (_samplesUsed < _samplesSize) {
-            _samples[_samplesUsed++] = 0;
+            _samples[_samplesUsed++] = _dcBias;
         }
     }
 }
@@ -54,7 +56,7 @@ void TestModem2::sendMark() {
     float omega = 2.0f * 3.1415926f * (float)_markFreq / (float)_sampleRate;
     for (unsigned int i = 0; i < _samplesPerSymbol; i++) {
         if (_samplesUsed < _samplesSize) {
-            _samples[_samplesUsed++] = std::cos(_phi);
+            _samples[_samplesUsed++] = _amp * std::cos(_phi) + _dcBias;
             _phi += omega;
         }
     }
@@ -64,7 +66,7 @@ void TestModem2::sendSpace() {
     float omega = 2.0f * 3.1415926f * (float)_spaceFreq / (float)_sampleRate;
     for (unsigned int i = 0; i < _samplesPerSymbol; i++) {
         if (_samplesUsed < _samplesSize) {
-            _samples[_samplesUsed++] = std::cos(_phi);
+            _samples[_samplesUsed++] = _amp * std::cos(_phi) + _dcBias;
             _phi += omega;
         }
     }
