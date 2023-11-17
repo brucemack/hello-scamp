@@ -23,12 +23,13 @@ namespace scamp {
 
 Demodulator::Demodulator(DemodulatorListener* listener, 
     uint16_t sampleFreq, uint16_t fftN, q15* fftTrigTable, q15* fftWindow,
-    q15* bufferSpace)
+    cq15* fftResultSpace, q15* bufferSpace)
 :   _listener(listener),
     _sampleFreq(sampleFreq),
     _fftN(fftN),
-    _fft(fftN, fftTrigTable),
     _fftWindow(fftWindow),
+    _fftResult(fftResultSpace),
+    _fft(fftN, fftTrigTable),
     _pll(sampleFreq),
     _buffer(bufferSpace) { 
 
@@ -41,7 +42,7 @@ Demodulator::Demodulator(DemodulatorListener* listener,
         _fftWindow[i] = f32_to_q15(0.5 * (1.0 - std::cos(2.0 * pi() * ((float) i) / ((float)_fftN))));
     }
 
-    memset((void*)bufferSpace, 0, _fftN);
+    memset((void*)_buffer, 0, _fftN);
     memset((void*)_maxBinHistory, 0, sizeof(_maxBinHistory));
     memset((void*)_demodulatorTone, 0, sizeof(_demodulatorTone));
     memset((void*)_symbolCorrFilter, 0, sizeof(_symbolCorrFilter));
@@ -61,19 +62,18 @@ void Demodulator::processSample(q15 sample) {
         
         _blockCount++;
 
-        // Do the FFT in a separate buffer, including the window.  
-        cq15 x[_fftN];
+        // Do the FFT in a the result buffer, including the window.  
         for (uint16_t i = 0; i < _fftN; i++) {
-            x[i].r = mult_q15(_buffer[wrapIndex(readBufferPtr, i, _fftN)], 
+            _fftResult[i].r = mult_q15(_buffer[wrapIndex(readBufferPtr, i, _fftN)], 
                 _fftWindow[i]);
-            x[i].i = 0;
+            _fftResult[i].i = 0;
         }
 
-        _fft.transform(x);
+        _fft.transform(_fftResult);
 
         // Find the largest power. Notice that we ignore bin 0 (DC)
         // since that's not relevant.
-        const uint16_t maxBin = max_idx(x, 1, _fftN / 2);
+        const uint16_t maxBin = max_idx(_fftResult, 1, _fftN / 2);
 
         // If we are not yet frequency locked, try to lock
         if (!_frequencyLocked) {
@@ -81,15 +81,15 @@ void Demodulator::processSample(q15 sample) {
             // Find the total power
             float totalPower = 0;
             for (uint16_t i = 0; i < _fftN / 2; i++) {
-                totalPower += x[i].mag_f32_squared();
+                totalPower += _fftResult[i].mag_f32_squared();
             }
             // Find the percentage of power at the max (and two adjacent)
-            float maxBinPower = x[maxBin].mag_f32_squared();
+            float maxBinPower = _fftResult[maxBin].mag_f32_squared();
             if (maxBin > 1) {
-                maxBinPower += x[maxBin - 1].mag_f32_squared();
+                maxBinPower += _fftResult[maxBin - 1].mag_f32_squared();
             }
             if (maxBin < (_fftN / 2) - 1) {
-                maxBinPower += x[maxBin + 1].mag_f32_squared();
+                maxBinPower += _fftResult[maxBin + 1].mag_f32_squared();
             }
             const float maxBinPowerFract = maxBinPower / totalPower;
 
@@ -168,41 +168,38 @@ void Demodulator::processSample(q15 sample) {
         demodulatorStart = _fftN - gap;
     }
     // Correlate recent history with each of the symbol tones
-    float symbolCorr[_symbolCount];
     for (uint16_t s = 0; s < _symbolCount; s++) {
         // HERE WE HAVE AUTOMATIC WRAPPING
-        symbolCorr[s] = complex_corr_2(_buffer, demodulatorStart, _fftN, 
+        _symbolCorr[s] = complex_corr_2(_buffer, demodulatorStart, _fftN, 
             _demodulatorTone[s], _demodulatorToneN);
         // Here we keep track of some recent history of the symbol 
         // correlation.
-        _symbolCorrFilter[s][_symbolCorrFilterPtr] = symbolCorr[s];
+        _symbolCorrFilter[s][_symbolCorrFilterPtr] = _symbolCorr[s];
     }
     _symbolCorrFilterPtr = (_symbolCorrFilterPtr + 1) % _symbolCorrFilterN;
 
     // Calculate the recent max and average correlation of each symbol
     // from the history series.
-    float symbolCorrAvg[_symbolCount];
-    float symbolCorrMax[_symbolCount];
     for (uint16_t s = 0; s < _symbolCount; s++) {
-        symbolCorrAvg[s] = 0;
-        symbolCorrMax[s] = 0;
+        _symbolCorrAvg[s] = 0;
+        _symbolCorrMax[s] = 0;
         for (uint16_t n = 0; n < _symbolCorrFilterN; n++) {
             float corr = _symbolCorrFilter[s][n];
-            symbolCorrAvg[s] += corr;
-            symbolCorrMax[s] = std::max(symbolCorrMax[s], corr);
+            _symbolCorrAvg[s] += corr;
+            _symbolCorrMax[s] = std::max(_symbolCorrMax[s], corr);
         }
-        symbolCorrAvg[s] /= (float)_symbolCorrFilterN;
+        _symbolCorrAvg[s] /= (float)_symbolCorrFilterN;
     }
 
     // Look for an inflection point in the respective correlations 
     // of the symbols.  
     if (_activeSymbol == 0) {
-        if (symbolCorrAvg[1] > symbolCorrAvg[0]) {
+        if (_symbolCorrAvg[1] > _symbolCorrAvg[0]) {
             _activeSymbol = 1;
             _listener->bitTransitionDetected();
         }
     } else {
-        if (symbolCorrAvg[0] > symbolCorrAvg[1]) {
+        if (_symbolCorrAvg[0] > _symbolCorrAvg[1]) {
             _activeSymbol = 0;
             _listener->bitTransitionDetected();
         }

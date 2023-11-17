@@ -24,13 +24,16 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "DemodulatorListener.h"
 #include "ClockRecoveryPLL.h"
 
+#define SYMBOL_COUNT (2)
+
 namespace scamp {
 
 class Demodulator {
 public:
 
     Demodulator(DemodulatorListener* listener, uint16_t sampleFreq, uint16_t fftN,
-        q15* fftTrigTableSpace, q15* fftWindowSpace, q15* bufferSpace);
+        q15* fftTrigTableSpace, q15* fftWindowSpace, cq15* fftResultSpace, 
+        q15* bufferSpace);
 
     void setSymbolSpread(uint16_t spreadHz){ _symbolSpreadHz = spreadHz; };
 
@@ -40,13 +43,18 @@ public:
      */
     void processSample(q15 sample);
 
+    uint16_t getFrameCount() const { return _frameCount; };
+    int32_t getPLLIntegration() const { return _pll.getIntegration(); };
+
 private: 
 
     DemodulatorListener* _listener;
     const uint16_t _sampleFreq;
     const uint16_t _fftN;
-    FixedFFT _fft;
     q15* _fftWindow;
+    cq15* _fftResult;
+    FixedFFT _fft;
+
     ClockRecoveryPLL _pll;
     const uint16_t _blockSize = 32;
 
@@ -98,17 +106,23 @@ private:
     // These buffers are loaded based on the frequency that the decoder
     // decides to lock onto. The signal is convolved with these tones
     // for demodulation.
-    const unsigned int _symbolCount = 2;
+    const unsigned int _symbolCount = SYMBOL_COUNT;
     const uint16_t _demodulatorToneN = 16;
-    cq15 _demodulatorTone[2][16];
+    cq15 _demodulatorTone[SYMBOL_COUNT][16];
+
+    // The most recent correlation for each symbol
+    float _symbolCorr[SYMBOL_COUNT];
 
     // These buffers hold the recent history of the correlation between
     // the received signal and the various demodulator tones.
     const uint16_t _symbolCorrFilterN = 4;
     uint16_t _symbolCorrFilterPtr = 0;
-    float _symbolCorrFilter[2][4];
+    float _symbolCorrFilter[SYMBOL_COUNT][4];
 
-
+    // The most correlation stats on the various symbols over the recent
+    // history
+    float _symbolCorrAvg[SYMBOL_COUNT];
+    float _symbolCorrMax[SYMBOL_COUNT];
 };
 
 }
