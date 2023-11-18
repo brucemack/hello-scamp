@@ -26,11 +26,13 @@ using namespace std;
 namespace scamp {
 
 Demodulator::Demodulator(DemodulatorListener* listener, 
-    uint16_t sampleFreq, uint16_t lowestFreq, uint16_t fftN, q15* fftTrigTable, q15* fftWindow,
+    uint16_t sampleFreq, uint16_t lowestFreq, uint16_t fftN, uint16_t log2fftN,
+    q15* fftTrigTable, q15* fftWindow,
     cq15* fftResultSpace, q15* bufferSpace)
 :   _listener(listener),
     _sampleFreq(sampleFreq),
     _fftN(fftN),
+    _log2fftN(log2fftN),
     _firstBin((fftN * lowestFreq) / sampleFreq),
     _fftWindow(fftWindow),
     _fftResult(fftResultSpace),
@@ -42,10 +44,12 @@ Demodulator::Demodulator(DemodulatorListener* listener,
     // wrong to show that PLL will adjust accordingly.
     _pll.setBitFrequencyHint(36);
 
-    // Build the Hann window for the FFT (raised cosine)
-    for (uint16_t i = 0; i < _fftN; i++) {
-        _fftWindow[i] = f32_to_q15(0.5 * (1.0 - std::cos(2.0 * pi() * ((float) i) / ((float)_fftN))));
-        //_fftWindow[i] = 0;
+    // Build the Hann window for the FFT (raised cosine) if a space has 
+    // been provided for it.
+    if (_fftWindow != 0) {
+        for (uint16_t i = 0; i < _fftN; i++) {
+            _fftWindow[i] = f32_to_q15(0.5 * (1.0 - std::cos(2.0 * pi() * ((float) i) / ((float)_fftN))));
+        }
     }
 
     memset((void*)_buffer, 0, _fftN);
@@ -68,24 +72,26 @@ void Demodulator::processSample(q15 sample) {
     _bufferPtr = (_bufferPtr + 1) % _fftN;
     _sampleCount++;
 
-    //if (_sampleCount == 2464) {
-    //    cout << "max=" << q15_to_f32(max_q15(_buffer, _fftN)) << " "
-    //        << "min=" << q15_to_f32(min_q15(_buffer, _fftN)) << " "
-    //        << "avg=" << q15_to_f32(mean_q15(_buffer, 9)) << endl;
-    //}
-
     // Did we just finish a new block?  If so, run the FFT
     if (_bufferPtr % _blockSize == 0) {
         
         _blockCount++;
 
+        // Compute the average across the FFT buffer for the purposes of DC
+        // bias removal
+        q15 avg = mean_q15(_buffer, _log2fftN);
+
         // Do the FFT in the result buffer, including the window.  
         for (uint16_t i = 0; i < _fftN; i++) {
-            _fftResult[i].r = mult_q15(
-                    _buffer[wrapIndex(readBufferPtr, i, _fftN)], 
+            if (_fftWindow != 0) {
+                _fftResult[i].r = mult_q15(
+                    _buffer[wrapIndex(readBufferPtr, i, _fftN)] - avg, 
                     _fftWindow[i]
                 );
-            //_fftResult[i].r = _buffer[wrapIndex(readBufferPtr, i, _fftN)];
+            } 
+            else {
+                _fftResult[i].r = _buffer[wrapIndex(readBufferPtr, i, _fftN)] - avg;
+            }
             _fftResult[i].i = 0;
         }
 
@@ -319,6 +325,10 @@ void Demodulator::processSample(q15 sample) {
             }
         }
     }
+}
+
+uint16_t Demodulator::getMarkFreq() const {
+    return (_lockedBinMark * _sampleFreq) / _fftN;
 }
 
 }

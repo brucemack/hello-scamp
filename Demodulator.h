@@ -37,7 +37,7 @@ class Demodulator {
 public:
 
     Demodulator(DemodulatorListener* listener, uint16_t sampleFreq, uint16_t lowestFreq,
-        uint16_t fftN,
+        uint16_t fftN, uint16_t log2fftN,
         q15* fftTrigTableSpace, q15* fftWindowSpace, cq15* fftResultSpace, 
         q15* bufferSpace);
 
@@ -54,22 +54,28 @@ public:
 
     void setFrequencyLock(bool lock);
 
+    bool isFrequencyLocked() const { return _frequencyLocked; }
     uint16_t getFrameCount() const { return _frameCount; };
     int32_t getPLLIntegration() const { return _pll.getIntegration(); };
     float getLastDCPower() const { return _lastDCPower; };
+    uint16_t getMarkFreq() const;
 
 private: 
 
     DemodulatorListener* _listener;
     const uint16_t _sampleFreq;
     const uint16_t _fftN;
+    const uint16_t _log2fftN;
     // This is the first bin that we pay attention to
     uint16_t _firstBin;
+    // Optional space passed in by user
     q15* _fftWindow;
     cq15* _fftResult;
     FixedFFT _fft;
 
     ClockRecoveryPLL _pll;
+
+    // FFT is performed every time this number of samples is collected
     const uint16_t _blockSize = 32;
 
     // This is the approximate symbol rate for SCAMP FSK.  This is used
