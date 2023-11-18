@@ -36,15 +36,15 @@ float corr(q15* data, q15* carrier, uint16_t len) {
 int main(int argc, const char** argv) {
 
     const uint16_t N = 1024;
-    const uint16_t fftN = 512;
     float sample_freq_hz = 2000.0;
-    float tone_freq_hz = 670.0;
+    float tone_freq_hz = 667.0;
     float tone_amp = 1.0;
-    float lo_freq_hz = 670.0;
+    float lo_freq_hz = 667.0;
     float lo_amp = 1.0;
 
     // Make a tone and then apply the FFT
     {
+        const uint16_t fftN = 512;
         float samples[512];
         TestModem2 modem(samples, 512, sample_freq_hz, 256, tone_freq_hz, tone_freq_hz,
             0.5, 0.1);
@@ -71,26 +71,42 @@ int main(int argc, const char** argv) {
         //render_spectrum(cout, x, fftN, sample_freq_hz);
     }
 
-    // Demonstrate correlation in phase (real only)
-    // Here you can see the correlation is almost 0.5 (highest possible)
+    float shift = -67;
+    uint16_t filterN = 16;
+    float power0, power1;   
+    tone_amp = 0.25;
+    float dcOffset = 0.5;
+
+    // 
     {
-        q15 tone_sample_r[N];
-        make_tone(tone_sample_r, N, sample_freq_hz, tone_freq_hz, tone_amp);
-        q15 lo_sample_r[N];
-        make_tone(lo_sample_r, N, sample_freq_hz, lo_freq_hz, lo_amp);
-        cout << "(Real) In phase " << corr(tone_sample_r, lo_sample_r, N) << endl;
+        q15 tone_sample[N];
+        make_real_tone_distorted(tone_sample, N, sample_freq_hz, tone_freq_hz, 
+            tone_amp, 45, dcOffset);
+        cout << "Tone min/max/mean " << q15_to_f32(min_q15(tone_sample, N)) << "/"
+            << q15_to_f32(max_q15(tone_sample, N)) << "/"
+            << q15_to_f32(mean_q15(tone_sample, 9)) << endl;
+
+        cq15 lo_sample[N];
+        make_complex_tone(lo_sample, N, sample_freq_hz, lo_freq_hz, lo_amp);
+        power0 = corr_real_complex(tone_sample, lo_sample, filterN);
+        cout << "(Real/Complex) In phase short  " << power0 << endl;
+    }
+    {
+        q15 tone_sample[N];
+        make_real_tone_distorted(tone_sample, N, sample_freq_hz, tone_freq_hz + shift, 
+            tone_amp, 45, dcOffset);
+        cq15 lo_sample[N];
+        make_complex_tone(lo_sample, N, sample_freq_hz, lo_freq_hz, lo_amp);
+        power1 = corr_real_complex(tone_sample, lo_sample, filterN);
+        cout << "(Real/Complex) In phase short  " << power1 << endl;
     }
 
-    // Demonstrate correlation out of phase (real only).
-    // Here you can see that the correlation goes to zero even though
-    // the frequency is exactly right.
-    {
-        q15 tone_sample_r[N];
-        make_tone(tone_sample_r, N, sample_freq_hz, tone_freq_hz, tone_amp, 90.0);
-        q15 lo_sample_r[N];
-        make_tone(lo_sample_r, N, sample_freq_hz, lo_freq_hz, lo_amp);
-        cout << "(Real) Out of phase " << corr(tone_sample_r, lo_sample_r, N) << endl;
-    }
+    float max = std::max(power0, power1);
+    cout << 100.0 * (power0 / max) << endl;
+    cout << 100.0 * (power1 / max) << endl;
+
+    return 0;
+
 
     // Demonstrate correlation in phase (complex)
     // Notice that the correlation is around 1.0
@@ -99,17 +115,46 @@ int main(int argc, const char** argv) {
         make_complex_tone(tone_sample, N, sample_freq_hz, tone_freq_hz, tone_amp);
         cq15 lo_sample[N];
         make_complex_tone(lo_sample, N, sample_freq_hz, lo_freq_hz, lo_amp);
-        cout << "(Complex) In phase " << complex_corr(tone_sample, lo_sample, N) << endl;
+        cout << "(Complex) In phase        " << complex_corr(tone_sample, lo_sample, N) << endl;
+        cout << "(Complex) In phase short  " << complex_corr(tone_sample, lo_sample, 12) << endl;
     }
+    {
+        q15 tone_sample[N];
+        make_real_tone(tone_sample, N, sample_freq_hz, tone_freq_hz, tone_amp);
+        cq15 lo_sample[N];
+        make_complex_tone(lo_sample, N, sample_freq_hz, lo_freq_hz, lo_amp);
+        cout << "(Real/Complex) In phase        " << corr_real_complex(tone_sample, lo_sample, N) << endl;
+        cout << "(Real/Complex) In phase short  " << corr_real_complex(tone_sample, lo_sample, 12) << endl;
+    }
+    {
+        q15 tone_sample[N];
+        make_real_tone(tone_sample, N, sample_freq_hz, tone_freq_hz, tone_amp, 45);
+        cq15 lo_sample[N];
+        make_complex_tone(lo_sample, N, sample_freq_hz, lo_freq_hz, lo_amp);
+        cout << "(Real/Complex) Out phase       " << corr_real_complex(tone_sample, lo_sample, N) << endl;
+        cout << "(Real/Complex) Out phase short " << corr_real_complex(tone_sample, lo_sample, 12) << endl;
+    }
+
+    cout << "---------" << endl;
 
     // Demonstrate complex correlation in phase but off frequency
     {
         cq15 tone_sample[N];
-        make_complex_tone(tone_sample, N, sample_freq_hz, tone_freq_hz, tone_amp);
+        make_complex_tone(tone_sample, N, sample_freq_hz, tone_freq_hz - 67, tone_amp);
         cq15 lo_sample[N];
-        make_complex_tone(lo_sample, N, sample_freq_hz, lo_freq_hz - 10, lo_amp);
-        cout << "(Complex) Off freq by 10 Hz " << complex_corr(tone_sample, lo_sample, N) << endl;
+        make_complex_tone(lo_sample, N, sample_freq_hz, lo_freq_hz, lo_amp);
+        cout << "(Complex) Off freq by 50 Hz       " << complex_corr(tone_sample, lo_sample, N) << endl;
+        cout << "(Complex) Off freq by 50 Hz short " << complex_corr(tone_sample, lo_sample, 12) << endl;
     }
+    {
+        q15 tone_sample[N];
+        make_real_tone(tone_sample, N, sample_freq_hz, tone_freq_hz - 67, tone_amp);
+        cq15 lo_sample[N];
+        make_complex_tone(lo_sample, N, sample_freq_hz, lo_freq_hz, lo_amp);
+        cout << "(Real/Complex) Off freq by 50 Hz       " << corr_real_complex(tone_sample, lo_sample, N) << endl;
+        cout << "(Real/Complex) Off freq by 50 Hz short " << corr_real_complex(tone_sample, lo_sample, 12) << endl;
+    }
+
 
     // Demonstrate complex correlation in phase but off frequency.
     // Notice that the correlation is still 1.0
@@ -131,6 +176,28 @@ int main(int argc, const char** argv) {
         cout << "(Complex) Out of phase " << complex_corr(tone_sample, lo_sample, N) << endl;
     }
 
+    // Demonstrate correlation in phase (real only)
+    // Here you can see the correlation is almost 0.5 (highest possible)
+    {
+        q15 tone_sample_r[N];
+        make_real_tone(tone_sample_r, N, sample_freq_hz, tone_freq_hz, tone_amp);
+        q15 lo_sample_r[N];
+        make_real_tone(lo_sample_r, N, sample_freq_hz, lo_freq_hz, lo_amp);
+        cout << "(Real) In phase " << corr(tone_sample_r, lo_sample_r, N) << endl;
+    }
+
+    // Demonstrate correlation out of phase (real only).
+    // Here you can see that the correlation goes to zero even though
+    // the frequency is exactly right.
+    {
+        q15 tone_sample_r[N];
+        make_real_tone(tone_sample_r, N, sample_freq_hz, tone_freq_hz, tone_amp, 90.0);
+        q15 lo_sample_r[N];
+        make_real_tone(lo_sample_r, N, sample_freq_hz, lo_freq_hz, lo_amp);
+        cout << "(Real) Out of phase " << corr(tone_sample_r, lo_sample_r, N) << endl;
+    }
+
+
     // Correlate real with complex
     {
         float samples[512];
@@ -149,31 +216,31 @@ int main(int argc, const char** argv) {
         {
             cq15 lo_sample[512];
             make_complex_tone_2(lo_sample, 512, bin - 2, 512, 0.5);
-            float corr = complex_corr_2(signal, 0, 512, lo_sample, 512); 
+            float corr = corr_real_complex_2(signal, 0, 512, lo_sample, 512); 
             cout << "CORR -2 " << corr << endl;
         }
         {
             cq15 lo_sample[512];
             make_complex_tone_2(lo_sample, 512, bin - 1, 512, 0.5);
-            float corr = complex_corr_2(signal, 0, 512, lo_sample, 512); 
+            float corr = corr_real_complex_2(signal, 0, 512, lo_sample, 512); 
             cout << "CORR -1 " << corr << endl;
         }
         {
             cq15 lo_sample[512];
             make_complex_tone_2(lo_sample, 512, bin, 512, 0.5);
-            float corr = complex_corr_2(signal, 0, 512, lo_sample, 512); 
+            float corr = corr_real_complex_2(signal, 0, 512, lo_sample, 512); 
             cout << "CORR    " << corr << endl;
         }
         {
             cq15 lo_sample[512];
             make_complex_tone_2(lo_sample, 512, bin + 1, 512, 0.5);
-            float corr = complex_corr_2(signal, 0, 512, lo_sample, 512); 
+            float corr = corr_real_complex_2(signal, 0, 512, lo_sample, 512); 
             cout << "CORR +1 " << corr << endl;
         }
         {
             cq15 lo_sample[512];
             make_complex_tone_2(lo_sample, 512, bin + 2, 512, 0.5);
-            float corr = complex_corr_2(signal, 0, 512, lo_sample, 512); 
+            float corr = corr_real_complex_2(signal, 0, 512, lo_sample, 512); 
             cout << "CORR +2 " << corr << endl;
         }
     }

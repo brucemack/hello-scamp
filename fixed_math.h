@@ -65,8 +65,18 @@ struct cq15 {
 q15 corr_q15(q15* d0, q15* d1, uint16_t len);
 
 /**
- * Returns the index with the maximum magnitude.
+ * Returns the index with the maximum magnitude, starting at the 
+ * specified location and.  NOTE: We only consider dataLen - start
+ * samples in this check!
+ * 
+ * @param start The index to start checking at.
+ * @param len The length of the data space.
  */
-uint16_t max_idx(const cq15* sample, uint16_t start, uint16_t len);
+uint16_t max_idx(const cq15* data, uint16_t start, uint16_t dataLen);
+
+q15 max_q15(const q15* data, uint16_t dataLen);
+q15 min_q15(const q15* data, uint16_t dataLen);
+// NOTE: This will only work for data lengths that are a power of two!
+q15 mean_q15(const q15* data, uint16_t log2DataLen);
 
 #endif

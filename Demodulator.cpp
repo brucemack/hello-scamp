@@ -16,6 +16,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 */
 #include <cstdint>
 #include <iostream>
+#include <cstring>
 
 #include "Util.h"
 #include "Demodulator.h"
@@ -36,8 +37,6 @@ Demodulator::Demodulator(DemodulatorListener* listener,
     _fft(fftN, fftTrigTable),
     _pll(sampleFreq),
     _buffer(bufferSpace) { 
-
-    cout << "First Bin " << _firstBin << endl;
 
     // NOTICE: We are purposely setting the initial frequency slightly 
     // wrong to show that PLL will adjust accordingly.
@@ -67,11 +66,20 @@ void Demodulator::processSample(q15 sample) {
     const uint16_t readBufferPtr = _bufferPtr;
     // Increment the write pointer and wrap if needed
     _bufferPtr = (_bufferPtr + 1) % _fftN;
+    _sampleCount++;
+
+    //if (_sampleCount == 2464) {
+    //    cout << "max=" << q15_to_f32(max_q15(_buffer, _fftN)) << " "
+    //        << "min=" << q15_to_f32(min_q15(_buffer, _fftN)) << " "
+    //        << "avg=" << q15_to_f32(mean_q15(_buffer, 9)) << endl;
+    //}
 
     // Did we just finish a new block?  If so, run the FFT
     if (_bufferPtr % _blockSize == 0) {
         
         _blockCount++;
+
+        //cout << "======= BLOCK " << _blockCount << endl;
 
         // Do the FFT in the result buffer, including the window.  
         for (uint16_t i = 0; i < _fftN; i++) {
@@ -87,6 +95,8 @@ void Demodulator::processSample(q15 sample) {
         // Find the largest power. Notice that we ignore some low bins (DC)
         // since that's not relevant to the spectral analysis.
         const uint16_t maxBin = max_idx(_fftResult, _firstBin, _fftN / 2);
+
+        //render_spectrum(cout, _fftResult, _fftN, _sampleFreq);
 
          // Capture DC magnitude for diagnostics
         _lastDCPower = _fftResult[0].mag_f32_squared();
@@ -118,7 +128,6 @@ void Demodulator::processSample(q15 sample) {
 
             // Find the variance of the max bin across the recent observations
             // to see if we have stability.  We are only looking 
-            float maxBinMean = 0;
             uint16_t binHistoryStart;
             uint16_t binHistoryLength;
             if (_longMarkBlocks > _maxBinHistorySize) {
@@ -128,44 +137,61 @@ void Demodulator::processSample(q15 sample) {
                 binHistoryStart = _maxBinHistorySize - _longMarkBlocks;
                 binHistoryLength = _longMarkBlocks;
             }
-            for (uint16_t i = 0; i < binHistoryLength; i++) {
-                maxBinMean += _maxBinHistory[binHistoryStart + i];
-            }
-            maxBinMean /= (float)binHistoryLength;
 
             // The locking logic only works when the history is full
             if (_blockCount >= binHistoryLength) {
 
-                float maxBinVar = 0;
-                for (uint16_t i = 0; i < binHistoryLength; i++) {
-                    if (_maxBinHistory[i] != 0) {
-                        maxBinVar += std::pow(_maxBinHistory[i] - maxBinMean, 2);
+                // Calculate the percentage of the recent history that is 
+                // within a few bins of the current max.  We are only looking at 
+                // the training section of the history here.
+                uint16_t hitCount = 0;
+                for (uint16_t i = binHistoryStart; i < _maxBinHistorySize; i++) {
+                    if (_maxBinHistory[i] >= maxBin - 1 &&
+                        _maxBinHistory[i] <= maxBin + 1) {
+                        hitCount++;
                     }
                 }
-                maxBinVar /= ((float)binHistoryLength - 1);
-                float maxBinStd = std::sqrt(maxBinVar);
 
-                // If the standard deviation is small and the power is large then 
-                // assume we're seeing the "long mark"                
-                if (maxBinStd <= 1.0 && maxBinPowerFract > 0.10) {
+                // TODO: REMOVE FLOATING POINT 
+                float hitPct = (float)hitCount / (float)binHistoryLength;
+
+                /*
+                if (_blockCount >= 55) {
+                    cout << "Max Bin History: [";
+                    for (int i = 0; i < _maxBinHistorySize; i++) {
+                        cout << _maxBinHistory[i] << " ";
+                    }
+                    cout << "]" << endl;
+                    cout << "Long Mark Blocks " << _longMarkBlocks << endl;
+                    cout << "History Size " << _maxBinHistorySize << endl;
+                    cout << "Start IDX " << binHistoryStart << endl;
+                    cout << "Considering " << binHistoryLength << endl;
+                    cout << "HIT PERCENT " << 100.0 * hitPct << endl;
+                    cout << "maxBinPowerFract " << maxBinPowerFract << endl;
+                }
+                */
+
+                // If one bin is dominating then perform a lock
+                if (hitPct > 0.9 && maxBinPowerFract > 0.10) {
+
                     _frequencyLocked = true;
                     _lockedBinMark = maxBin;
-                    float lockedBinSpread = ((float)_symbolSpreadHz / (float)_sampleFreq) * 
-                        (float)_fftN;
-                    float lockedBinSpace = ((float)_lockedBinMark - lockedBinSpread);
 
+                    // Convert the bin number to a frequency in Hz
                     float lockedMarkHz = (float)_lockedBinMark * (float)_sampleFreq / (float)_fftN;
-                    float lockedSpaceHz = lockedBinSpace * (float)_sampleFreq / (float)_fftN;
+                    float lockedSpaceHz = lockedMarkHz - _symbolSpreadHz;
 
-                    make_complex_tone_2(_demodulatorTone[0], _demodulatorToneN, 
-                        (float)lockedBinSpace, _fftN, 0.5);
-                    make_complex_tone_2(_demodulatorTone[1], _demodulatorToneN, 
-                        (float)_lockedBinMark, _fftN, 0.5);
+                    make_complex_tone(_demodulatorTone[0], _demodulatorToneN, 
+                        _sampleFreq, lockedSpaceHz, 0.5);
+                    make_complex_tone(_demodulatorTone[1], _demodulatorToneN, 
+                        _sampleFreq, lockedMarkHz, 0.5);
 
                     _listener->frequencyLocked(lockedMarkHz, lockedSpaceHz);                    
-                    //cout << "Locked at block " << _blockCount << endl;
+
+                    //cout << "max=" << q15_to_f32(max_q15(_buffer, _fftN)) << " "
+                    //     << "min=" << q15_to_f32(min_q15(_buffer, _fftN)) << " "
+                    //     << "avg=" << q15_to_f32(mean_q15(_buffer, 9)) << endl;
                     //render_spectrum(cout, _fftResult, _fftN, _sampleFreq);
-                    //exit(0); 
                 }
             }
         }
@@ -188,8 +214,9 @@ void Demodulator::processSample(q15 sample) {
     }
     // Correlate recent history with each of the symbol tones
     for (uint16_t s = 0; s < _symbolCount; s++) {
-        // HERE WE HAVE AUTOMATIC WRAPPING
-        _symbolCorr[s] = complex_corr_2(_buffer, demodulatorStart, _fftN, 
+        // Here we have automatic wrapping in the _buffer space, so don't
+        // worry if demodulatorStart is close to the end.
+        _symbolCorr[s] = corr_real_complex_2(_buffer, demodulatorStart, _fftN, 
             _demodulatorTone[s], _demodulatorToneN);
         // Here we keep track of some recent history of the symbol 
         // correlation.
@@ -199,6 +226,7 @@ void Demodulator::processSample(q15 sample) {
 
     // Calculate the recent max and average correlation of each symbol
     // from the history series.
+    float overallMaxCorr = 0;
     for (uint16_t s = 0; s < _symbolCount; s++) {
         _symbolCorrAvg[s] = 0;
         _symbolCorrMax[s] = 0;
@@ -206,19 +234,42 @@ void Demodulator::processSample(q15 sample) {
             float corr = _symbolCorrFilter[s][n];
             _symbolCorrAvg[s] += corr;
             _symbolCorrMax[s] = std::max(_symbolCorrMax[s], corr);
+            overallMaxCorr = std::max(overallMaxCorr, corr);
         }
         _symbolCorrAvg[s] /= (float)_symbolCorrFilterN;
     }
 
+    for (uint16_t s = 0; s < _symbolCount; s++) {
+        _symbolCorrAvgRatio[s] = _symbolCorrAvg[s] / overallMaxCorr;
+    }
+   
+    /*
+    if (_sampleCount >= 1800) {
+        if (_sampleCount % 60 == 0) {
+            cout << "-----" << (_sampleCount / 60) << "-------------------" << endl;
+        }
+        cout << _sampleCount << " " << (int)_activeSymbol << " " << 
+            100.0 * (_symbolCorr[1] / overallMaxCorr) << " " << 
+            100.0 * (_symbolCorr[0] / overallMaxCorr) << " / " << 
+            100.0 * _symbolCorrAvgRatio[1] << " " << 
+            100.0 * _symbolCorrAvgRatio[0] << 
+            endl;
+    } 
+    */   
+
     // Look for an inflection point in the respective correlations 
     // of the symbols.  
     if (_activeSymbol == 0) {
-        if (_symbolCorrAvg[1] > _symbolCorrAvg[0]) {
+        // Look for transition to 1
+        if (_symbolCorrAvgRatio[1] >= _symbolCorrThreshold && 
+            _symbolCorrAvgRatio[0] <= _symbolCorrThreshold) {
             _activeSymbol = 1;
             _listener->bitTransitionDetected();
         }
     } else {
-        if (_symbolCorrAvg[0] > _symbolCorrAvg[1]) {
+        // Look for transition to 0
+        if (_symbolCorrAvgRatio[0] >= _symbolCorrThreshold && 
+            _symbolCorrAvgRatio[1] <= _symbolCorrThreshold) {
             _activeSymbol = 0;
             _listener->bitTransitionDetected();
         }

@@ -41,25 +41,25 @@ unsigned int encodeString(const char* in, Frame30* outList, unsigned int outList
 void visitTone(const unsigned int len, uint16_t sample_freq_hz, uint16_t tone_freq_hz,
     float amplitude, uint16_t phaseDegrees, std::function<void(uint16_t idx, float y)> cb);
 
-void make_tone(q15* output, 
-    const unsigned int len, float sample_freq_hz, 
-    float tone_freq_hz, float amplitude, float phaseDegrees = 0);
+void make_real_tone(q15* output, const unsigned int len, 
+    float sample_freq_hz, float tone_freq_hz, 
+    float amplitude, float phaseDegrees = 0);
+
+void make_real_tone_distorted(q15* output, const unsigned int len, 
+    float sample_freq_hz, float tone_freq_hz, 
+    float amplitude, float phaseDegrees, float dcOffset);
 
 void addTone(q15* output, 
     const unsigned int len, float sample_freq_hz, 
     float tone_freq_hz, float amplitude, float phaseDegrees = 0);
 
-void make_complex_tone(cq15* output, 
-    const unsigned int len, float sample_freq_hz, 
-    float tone_freq_hz, float amplitude, float phaseDegrees = 0);
-
-void make_complex_tone_2(cq15* output, uint32_t len, 
-    float bin, uint16_t binCount, 
+void make_complex_tone(cq15* output, unsigned int len, 
+    float sample_freq_hz, float tone_freq_hz, 
     float amplitude, float phaseDegrees = 0);
 
 float complex_corr(cq15* c0, cq15* c1, uint16_t len);
 
-float pi();
+float corr_real_complex(const q15* c0, const cq15* c1, uint16_t len);
 
 /**
  * This is a convolution function that supports a circular buffer
@@ -68,10 +68,13 @@ float pi();
  * from an ADC with the complex coefficients of an FIR or quadrature
  * demodulator.
  * 
- * Automatic wrapping is used to avoid going off the end of c0.
+ * Automatic wrapping on the c0 buffer is used to avoid going off the end.
  */
-float complex_corr_2(const q15* c0, uint16_t c0Base, 
-    uint16_t c0Size, const cq15* c1, uint16_t c1Len);
+float corr_real_complex_2(const q15* c0, uint16_t c0Base, uint16_t c0Size, 
+    const cq15* c1, uint16_t c1Len);
+
+float pi();
+
 
 void make_bar(std::ostream& str, unsigned int len);
 

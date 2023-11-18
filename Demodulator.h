@@ -89,9 +89,11 @@ private:
     // default here is relevant to the SCAMP FSK mode.
     uint16_t _symbolSpreadHz = 67;
 
+    uint32_t _sampleCount = 0;
+
     // Here's where we put the recent sample history in order to build
     // up enough to run the spectral analysis.
-    uint32_t _bufferPtr = 0;
+    uint16_t _bufferPtr = 0;
     q15* _buffer; 
 
     float _lastDCPower = 0;
@@ -135,10 +137,17 @@ private:
     uint16_t _symbolCorrFilterPtr = 0;
     float _symbolCorrFilter[SYMBOL_COUNT][4];
 
+    // This is the threshold we use to decide if a symbol is present or not
+    float _symbolCorrThreshold = 0.75;
+
     // The most correlation stats on the various symbols over the recent
-    // history
+    // history.
     float _symbolCorrAvg[SYMBOL_COUNT];
     float _symbolCorrMax[SYMBOL_COUNT];
+    // The average of the symbol's correlation as a ratio of the maximum
+    // correlation seen (across all symbols) in the same period.  This
+    // is a good indicator of whether a symbol is present.
+    float _symbolCorrAvgRatio[SYMBOL_COUNT];
 };
 
 }

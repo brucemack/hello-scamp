@@ -58,3 +58,34 @@ uint16_t max_idx(const cq15* sample, uint16_t start, uint16_t len) {
     }
     return max_bin;
 }
+
+q15 max_q15(const q15* data, uint16_t dataLen) {
+    q15 max = 0;
+    for (uint16_t i = 0; i < dataLen; i++) {
+        if (i == 0 || data[i] > max) {
+            max = data[i];
+        }
+    }
+    return max;
+}
+
+q15 min_q15(const q15* data, uint16_t dataLen) {
+    q15 min = 0;
+    for (uint16_t i = 0; i < dataLen; i++) {
+        if (i == 0 || data[i] < min) {
+            min = data[i];
+        }
+    }
+    return min;
+}
+
+q15 mean_q15(const q15* data, uint16_t log2DataLen) {
+    uint16_t dataLen = 1 << log2DataLen;
+    // The total uses extra precision to avoid overflow
+    uint32_t total = 0;
+    for (uint16_t i = 0; i < dataLen; i++) {
+        total += data[i];
+    }
+    // Divide by the number of buckets
+    return (uint16_t)(total >> log2DataLen);
+}

@@ -16,6 +16,16 @@ add_executable(unit-test-7a
   Demodulator.cpp TestDemodulatorListener.cpp
 )
 
+add_executable(unit-test-3
+  unit-test-3.cpp 
+  Util.cpp
+  fixed_math.cpp fixed_fft.cpp 
+  Symbol6.cpp CodeWord12.cpp CodeWord24.cpp 
+  Frame30.cpp FileModulator.cpp TestModem.cpp 
+  TestModem2.cpp ClockRecoveryPLL.cpp
+  Demodulator.cpp TestDemodulatorListener.cpp
+)
+
 add_executable(unit-test-4
   unit-test-4.cpp 
   Util.cpp
