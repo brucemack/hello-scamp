@@ -197,53 +197,5 @@ int main(int argc, const char** argv) {
         cout << "(Real) Out of phase " << corr(tone_sample_r, lo_sample_r, N) << endl;
     }
 
-
-    // Correlate real with complex
-    {
-        float samples[512];
-        //
-        TestModem2 modem(samples, 512, sample_freq_hz, 512, tone_freq_hz, tone_freq_hz,
-            0.5, 0.05);
-        modem.sendMark();
-        
-        uint16_t bin = (tone_freq_hz * 512) / sample_freq_hz;
-        cout << "Bin " << bin << endl;
-        q15 signal[512];
-        for (uint16_t i = 0; i < 512; i++) {
-            signal[i] = f32_to_q15(samples[i]);
-        }
-
-        {
-            cq15 lo_sample[512];
-            make_complex_tone_2(lo_sample, 512, bin - 2, 512, 0.5);
-            float corr = corr_real_complex_2(signal, 0, 512, lo_sample, 512); 
-            cout << "CORR -2 " << corr << endl;
-        }
-        {
-            cq15 lo_sample[512];
-            make_complex_tone_2(lo_sample, 512, bin - 1, 512, 0.5);
-            float corr = corr_real_complex_2(signal, 0, 512, lo_sample, 512); 
-            cout << "CORR -1 " << corr << endl;
-        }
-        {
-            cq15 lo_sample[512];
-            make_complex_tone_2(lo_sample, 512, bin, 512, 0.5);
-            float corr = corr_real_complex_2(signal, 0, 512, lo_sample, 512); 
-            cout << "CORR    " << corr << endl;
-        }
-        {
-            cq15 lo_sample[512];
-            make_complex_tone_2(lo_sample, 512, bin + 1, 512, 0.5);
-            float corr = corr_real_complex_2(signal, 0, 512, lo_sample, 512); 
-            cout << "CORR +1 " << corr << endl;
-        }
-        {
-            cq15 lo_sample[512];
-            make_complex_tone_2(lo_sample, 512, bin + 2, 512, 0.5);
-            float corr = corr_real_complex_2(signal, 0, 512, lo_sample, 512); 
-            cout << "CORR +2 " << corr << endl;
-        }
-    }
-
     return 0;
 }

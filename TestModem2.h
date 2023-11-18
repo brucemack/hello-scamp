@@ -30,8 +30,8 @@ public:
 
     TestModem2(float* samples, unsigned int samplesSize, unsigned int sampleRate,
         unsigned int samplesPerSymbol,
-        unsigned int markFreq, unsigned int spaceFreq,
-        float amp, float dcBias);
+        unsigned int markFreq, unsigned int spaceFreq, float amp, 
+        float dcBias = 0, float noiseAmp = 0);
     virtual ~TestModem2() { }
 
     virtual void sendSilence();
@@ -42,6 +42,8 @@ public:
     uint32_t getSamplesUsed() const { return _samplesUsed; }
 
 private:
+    
+    float _getNoise();
 
     float* _samples;
     unsigned int _samplesSize;
@@ -52,7 +54,9 @@ private:
     unsigned int _spaceFreq;
     float _amp;
     float _dcBias;
+    float _noiseAmp;
     float _phi = 0;
+
 };
 
 }

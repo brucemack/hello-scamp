@@ -79,14 +79,13 @@ void Demodulator::processSample(q15 sample) {
         
         _blockCount++;
 
-        //cout << "======= BLOCK " << _blockCount << endl;
-
         // Do the FFT in the result buffer, including the window.  
         for (uint16_t i = 0; i < _fftN; i++) {
-            //_fftResult[i].r = mult_q15(_buffer[wrapIndex(readBufferPtr, i, _fftN)], 
-            //    _fftWindow[i]);
-            _fftResult[i].r = _buffer[wrapIndex(readBufferPtr, i, _fftN)];
-            //    _fftWindow[i]);
+            _fftResult[i].r = mult_q15(
+                    _buffer[wrapIndex(readBufferPtr, i, _fftN)], 
+                    _fftWindow[i]
+                );
+            //_fftResult[i].r = _buffer[wrapIndex(readBufferPtr, i, _fftN)];
             _fftResult[i].i = 0;
         }
 

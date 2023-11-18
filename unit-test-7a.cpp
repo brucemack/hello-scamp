@@ -70,11 +70,15 @@ int main(int, const char**) {
     cout << "  Samples/Symbol : " << samplesPerSymbol << endl;
 
     // This is the modem used for the demonstration.  Samples
-    // are written to a memory buffer. Note that we have applied
-    // a DC bias here to ensure that this doesn't create a problem
-    // anywhere in the decoder.
+    // are written to a memory buffer. 
+    //
+    // Note that we have applied a DC bias here to ensure that this doesn't 
+    // create a problem anywhere in the decoder.
+    //
+    // Note that we have applied random noise to the signal to ensure that 
+    // this doesn't create a problem.
     TestModem2 modem2(samples, S, sampleFreq, samplesPerSymbol, 
-        markFreq + tuningErrorHz, spaceFreq + tuningErrorHz, 0.3, 0.1);
+        markFreq + tuningErrorHz, spaceFreq + tuningErrorHz, 0.3, 0.1, 0.05);
 
     // This is a modem that is used to capture the data for printing.
     int8_t printSamples[34 * 30];
