@@ -37,7 +37,7 @@ class Demodulator {
 public:
 
     Demodulator(DemodulatorListener* listener, uint16_t sampleFreq, uint16_t lowestFreq,
-        uint16_t fftN, uint16_t log2fftN,
+        uint16_t log2fftN,
         q15* fftTrigTableSpace, q15* fftWindowSpace, cq15* fftResultSpace, 
         q15* bufferSpace);
 
@@ -72,12 +72,10 @@ private:
     q15* _fftWindow;
     cq15* _fftResult;
     FixedFFT _fft;
-
     ClockRecoveryPLL _pll;
 
     // FFT is performed every time this number of samples is collected
     const uint16_t _blockSize = 32;
-
     // This is the approximate symbol rate for SCAMP FSK.  This is used
     // only to estimate the length of the "long mark"    
     const unsigned int _samplesPerSymbol = 60;

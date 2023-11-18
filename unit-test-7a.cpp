@@ -56,8 +56,8 @@ const unsigned int S = 34 * 30 * samplesPerSymbol;
 static float samples[S];
 
 // The size of the FFT used for frequency acquisition
-const uint16_t fftN = 512;
 const uint16_t log2fftN = 9;
+const uint16_t fftN = 1 << log2fftN;
 
 int main(int, const char**) {
 
@@ -141,7 +141,7 @@ int main(int, const char**) {
         cq15 fftResult[fftN];
 
         TestDemodulatorListener testListener;
-        Demodulator demod(&testListener, sampleFreq, lowFreq, fftN, log2fftN,
+        Demodulator demod(&testListener, sampleFreq, lowFreq, log2fftN,
             trigTable, window, fftResult, buffer);
 
         // Walk through the data one byte at a time.  We do something extra

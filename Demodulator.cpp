@@ -26,17 +26,17 @@ using namespace std;
 namespace scamp {
 
 Demodulator::Demodulator(DemodulatorListener* listener, 
-    uint16_t sampleFreq, uint16_t lowestFreq, uint16_t fftN, uint16_t log2fftN,
+    uint16_t sampleFreq, uint16_t lowestFreq, uint16_t log2fftN,
     q15* fftTrigTable, q15* fftWindow,
     cq15* fftResultSpace, q15* bufferSpace)
 :   _listener(listener),
     _sampleFreq(sampleFreq),
-    _fftN(fftN),
+    _fftN(1 << log2fftN),
     _log2fftN(log2fftN),
-    _firstBin((fftN * lowestFreq) / sampleFreq),
+    _firstBin((_fftN * lowestFreq) / sampleFreq),
     _fftWindow(fftWindow),
     _fftResult(fftResultSpace),
-    _fft(fftN, fftTrigTable),
+    _fft(_fftN, fftTrigTable),
     _pll(sampleFreq),
     _buffer(bufferSpace) { 
 
