@@ -36,10 +36,12 @@ namespace scamp {
 class Demodulator {
 public:
 
-    Demodulator(DemodulatorListener* listener, uint16_t sampleFreq, uint16_t lowestFreq,
+    Demodulator(uint16_t sampleFreq, uint16_t lowestFreq,
         uint16_t log2fftN,
         q15* fftTrigTableSpace, q15* fftWindowSpace, cq15* fftResultSpace, 
         q15* bufferSpace);
+
+    void setListener(DemodulatorListener* listener) { _listener = listener; };
 
     /**
      * Call this depending on the mode being used.

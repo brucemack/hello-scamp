@@ -81,6 +81,6 @@ namespace scamp {
         bool _lastSample = false;
         uint16_t _samplesSinceEdge = 0;
     };
-};
+}
 
 #endif

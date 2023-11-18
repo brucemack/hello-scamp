@@ -141,8 +141,9 @@ int main(int, const char**) {
         cq15 fftResult[fftN];
 
         TestDemodulatorListener testListener;
-        Demodulator demod(&testListener, sampleFreq, lowFreq, log2fftN,
+        Demodulator demod(sampleFreq, lowFreq, log2fftN,
             trigTable, window, fftResult, buffer);
+        demod.setListener(&testListener);
 
         // Walk through the data one byte at a time.  We do something extra
         // each time we have processed a complete block.
