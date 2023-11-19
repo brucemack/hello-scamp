@@ -225,7 +225,8 @@ void Demodulator::processSample(q15 sample) {
         // correlation.
         _symbolCorrFilter[s][_symbolCorrFilterPtr] = _symbolCorr[s];
     }
-    _symbolCorrFilterPtr = (_symbolCorrFilterPtr + 1) % _symbolCorrFilterN;
+
+    _symbolCorrFilterPtr = incAndWrap(_symbolCorrFilterPtr, _symbolCorrFilterN);
 
     // Calculate the recent max and average correlation of each symbol
     // from the history series.

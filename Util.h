@@ -79,6 +79,11 @@ float pi();
 void make_bar(std::ostream& str, unsigned int len);
 
 /**
+ * Adds on to the index and wraps back to zero if necessary.
+*/
+uint16_t incAndWrap(uint16_t index, uint16_t size);
+
+/**
  * A utility function for dealing with circular buffers.  Result
  * is (base + disp) % size.
 */

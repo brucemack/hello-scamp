@@ -208,12 +208,20 @@ float corr_real_complex(const q15* c0, const cq15* c1, uint16_t len)  {
     return std::sqrt(result_r * result_r + result_i * result_i);
 }
 
-uint16_t wrapIndex(uint16_t base, uint16_t disp, uint16_t size) {
-    uint16_t r = (base + disp) % size;
-    if (r >= size) {
-        cout << "ERROR!" << endl;
+uint16_t incAndWrap(uint16_t i, uint16_t size) {
+    uint16_t result = i + 1;
+    if (result == size) {
+        result = 0;
     }
-    return r;
+    return result;
+}
+
+uint16_t wrapIndex(uint16_t base, uint16_t disp, uint16_t size) {
+    uint16_t target = base + disp;
+    while (target >= size) {
+        target -= size;
+    }
+    return target;
 }
 
 // TODO: CLEAN THIS UP FOR EFFICIENCY
@@ -225,21 +233,29 @@ float corr_real_complex_2(const q15* c0, uint16_t c0Base, uint16_t c0Size,
 
     for (uint16_t i = 0; i < c1Len; i++) {
         float a = q15_to_f32(c0[wrapIndex(c0Base, i, c0Size)]);
-        float b = 0;
         float c = q15_to_f32(c1[i].r);
         // Complex conjugate
         float d = -q15_to_f32(c1[i].i);
         // Use the method that minimizes multiplication
         float ac = a * c;
-        float bd = b * d;
-        float a_plus_b = a + b;
+        float a_plus_b = a;
         float c_plus_d = c + d;
         float p0 = a_plus_b * c_plus_d;
-        result_r += (ac - bd) / (float)c1Len;
-        result_i += (p0 - ac - bd) / (float)c1Len;
+        result_r += (ac);
+        result_i += (p0 - ac);
     }
 
-    return std::sqrt(result_r * result_r + result_i * result_i);
+    result_r /= (float)c1Len;
+    result_i /= (float)c1Len;
+
+    // We are using an approximation of the square/square root magnitude
+    // calculator here:
+    //return std::sqrt(result_r * result_r + result_i * result_i);
+
+    float abs_result_r = std::abs(result_r);
+    float abs_result_i = std::abs(result_i);
+    return std::max(abs_result_r, abs_result_i) + 
+           std::floor((abs_result_r + abs_result_i) / 2.0);
 }
 
 uint16_t modulateMessage(const char* asciiMsg, Modulator& mod,
