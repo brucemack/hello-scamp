@@ -137,7 +137,7 @@ int main(int, const char**) {
     // Now decode without any prior knowledge of the frequency or phase
     // of the transmitter.
     {
-        TestDemodulatorListener testListener(SampleArea, 2000);
+        TestDemodulatorListener testListener(cout, SampleArea, 2000);
         testListener.setTriggerMode(TestDemodulatorListener::TriggerMode::ON_LOCK);
 
         // Space for the demodulator to work in (no dynamic memory allocation!)

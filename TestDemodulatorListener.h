@@ -30,6 +30,10 @@ namespace scamp {
 class TestDemodulatorListener : public DemodulatorListener {
 public:
 
+    /**
+     * NOTE: Each of these takes approximately 20 bytes, so one second consumes
+     * about 40K.  
+    */
     struct Sample {
         uint8_t activeSymbol;
         uint8_t capture;
@@ -41,8 +45,9 @@ public:
 
     enum TriggerMode { NONE, MANUAL, ON_LOCK };
 
-    TestDemodulatorListener();
-    TestDemodulatorListener(Sample* sampleSpace, uint16_t sampleSpaceSize);
+    TestDemodulatorListener(std::ostream& out);
+    TestDemodulatorListener(std::ostream& out,
+        Sample* sampleSpace, uint16_t sampleSpaceSize);
 
     virtual void dataSyncAcquired();
     virtual void frequencyLocked(uint16_t markFreq, uint16_t spaceFreq);
@@ -64,7 +69,8 @@ public:
 
 private:
 
-    std::ostringstream _out;
+    std::ostream& _out;
+    std::ostringstream _msg;
     Sample* _sampleSpace = 0;
     uint16_t _sampleSpaceSize = 0;
     uint16_t _sampleSpacePtr = 0;

@@ -21,23 +21,26 @@ using namespace std;
 
 namespace scamp {
 
-TestDemodulatorListener::TestDemodulatorListener() {
-    _sampleSpace = 0;
-    _sampleSpaceSize = 0;
+TestDemodulatorListener::TestDemodulatorListener(ostream& out) 
+:   _out(out),
+    _sampleSpace(0),
+    _sampleSpaceSize(0) {
 }
 
-TestDemodulatorListener::TestDemodulatorListener(Sample* sampleSpace, uint16_t sampleSpaceSize) {
-    _sampleSpace = sampleSpace;
-    _sampleSpaceSize = sampleSpaceSize;
+TestDemodulatorListener::TestDemodulatorListener(ostream& out,
+    Sample* sampleSpace, uint16_t sampleSpaceSize) 
+:   _out(out),
+    _sampleSpace(sampleSpace),
+    _sampleSpaceSize(sampleSpaceSize) {
 }
 
 void TestDemodulatorListener::dataSyncAcquired() {
-    cout << "Data Sync Acquired" << endl;
+    _out << "Data Sync Acquired" << endl;
 }
 
 void TestDemodulatorListener::frequencyLocked(uint16_t markFreq, 
     uint16_t spaceFreq) {
-    cout << "Frequency locked at mark=" << markFreq << ", space=" << spaceFreq << endl;
+    _out << "Frequency locked at mark=" << markFreq << ", space=" << spaceFreq << endl;
     // Check to see if we should trigger
     if (_triggerMode == ON_LOCK) {
         _triggered = true;
@@ -46,15 +49,15 @@ void TestDemodulatorListener::frequencyLocked(uint16_t markFreq,
 }
 
 void TestDemodulatorListener::badFrameReceived(uint32_t rawFrame) {
-    cout << "Bad frame ignored" << endl;
+    _out << "Bad frame ignored" << endl;
 }
 
 void TestDemodulatorListener::received(char asciiChar) {
-    _out << asciiChar;
+    _msg << asciiChar;
 }
 
 string TestDemodulatorListener::getMessage() const {
-    return _out.str();
+    return _msg.str();
 }
 
 void TestDemodulatorListener::goodFrameReceived() {
