@@ -43,6 +43,12 @@ struct cq15 {
         return std::sqrt(ref * ref + imf * imf);
     }
 
+    q15 approx_mag_q15() const {
+        q15 abs_r = abs_q15(r);
+        q15 abs_i = abs_q15(i);
+        return std::max(abs_r, abs_i) + ((abs_r + abs_i) >> 1); 
+    }
+
     float mag_f32_squared() const {
         float ref = q15_to_f32(r);
         float imf = q15_to_f32(i);
@@ -71,6 +77,12 @@ q15 corr_q15(q15* d0, q15* d1, uint16_t len);
  * @param len The length of the data space.
  */
 uint16_t max_idx(const cq15* data, uint16_t start, uint16_t dataLen);
+
+/**
+ * A faster version that uses fixed point and an approximation 
+ * for the complex magnitude.
+*/
+uint16_t max_idx_2(const cq15* sample, uint16_t start, uint16_t len);
 
 q15 max_q15(const q15* data, uint16_t dataLen);
 q15 min_q15(const q15* data, uint16_t dataLen);

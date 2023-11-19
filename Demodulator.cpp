@@ -97,7 +97,8 @@ void Demodulator::processSample(q15 sample) {
 
         // Find the largest power. Notice that we ignore some low bins (DC)
         // since that's not relevant to the spectral analysis.
-        const uint16_t maxBin = max_idx(_fftResult, _firstBin, _fftN / 2);
+        //const uint16_t maxBin = max_idx(_fftResult, _firstBin, _fftN / 2);
+        const uint16_t maxBin = max_idx_2(_fftResult, _firstBin, _fftN / 2);
 
         //render_spectrum(cout, _fftResult, _fftN, _sampleFreq);
 
@@ -215,6 +216,7 @@ void Demodulator::processSample(q15 sample) {
         uint16_t gap = _demodulatorToneN - readBufferPtr;
         demodulatorStart = _fftN - gap;
     }
+
     // Correlate recent history with each of the symbol tones
     for (uint16_t s = 0; s < _symbolCount; s++) {
         // Here we have automatic wrapping in the _buffer space, so don't
@@ -225,7 +227,6 @@ void Demodulator::processSample(q15 sample) {
         // correlation.
         _symbolCorrFilter[s][_symbolCorrFilterPtr] = _symbolCorr[s];
     }
-
     _symbolCorrFilterPtr = incAndWrap(_symbolCorrFilterPtr, _symbolCorrFilterN);
 
     // Calculate the recent max and average correlation of each symbol

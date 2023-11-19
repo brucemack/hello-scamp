@@ -59,6 +59,21 @@ uint16_t max_idx(const cq15* sample, uint16_t start, uint16_t len) {
     return max_bin;
 }
 
+uint16_t max_idx_2(const cq15* sample, uint16_t start, uint16_t len) {
+    q15 max_mag = 0;
+    uint16_t max_bin = 0;
+    for (unsigned int i = 0; i < len; i++) {
+        if (i >= start) {
+            q15 m = sample[i].approx_mag_q15();
+            if (m > max_mag) {
+                max_mag = m;
+                max_bin = i;
+            }
+        }
+    }
+    return max_bin;
+}
+
 q15 max_q15(const q15* data, uint16_t dataLen) {
     q15 max = 0;
     for (uint16_t i = 0; i < dataLen; i++) {

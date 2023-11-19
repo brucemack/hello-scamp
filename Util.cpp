@@ -245,9 +245,11 @@ float corr_real_complex_2(const q15* c0, uint16_t c0Base, uint16_t c0Size,
         result_i += (p0 - ac);
     }
 
-    result_r /= (float)c1Len;
-    result_i /= (float)c1Len;
-
+    // Normally this would be scaled back to the length of the series, 
+    // but we're skipping this because we don't care about the scale.
+    //result_r /= (float)c1Len;
+    //result_i /= (float)c1Len;
+    
     // We are using an approximation of the square/square root magnitude
     // calculator here:
     //return std::sqrt(result_r * result_r + result_i * result_i);
