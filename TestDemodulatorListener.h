@@ -57,6 +57,7 @@ public:
     virtual void sampleMetrics(uint8_t activeSymbol, bool capture, 
         int32_t pllError,
         float* symbolCorr, float* symbolCorrAvg, float maxCorr);
+    virtual void receivedBit(bool bit, uint16_t frameBitPos, int syncFrameCorr);
 
     std::string getMessage() const;
 

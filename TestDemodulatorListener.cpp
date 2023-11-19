@@ -88,6 +88,15 @@ void TestDemodulatorListener::sampleMetrics(uint8_t activeSymbol, bool capture,
     }
 }
 
+void TestDemodulatorListener::receivedBit(bool bit, uint16_t frameBitPos, 
+    int syncFrameCorr) {
+    if (frameBitPos == 0) {
+        _out << "====" << endl;
+    }
+    _out << "BIT (" << frameBitPos << ") = " << (int)bit 
+        << ", c=" << syncFrameCorr << endl;
+}
+
 void TestDemodulatorListener::setTriggerMode(TriggerMode mode) {
     _triggerMode = mode;
 }

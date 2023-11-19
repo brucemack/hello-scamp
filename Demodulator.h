@@ -46,13 +46,19 @@ public:
     /**
      * Call this depending on the mode being used.
      */
-    void setSymbolSpread(uint16_t spreadHz){ _symbolSpreadHz = spreadHz; };
+    void setSymbolSpread(uint16_t spreadHz) { _symbolSpreadHz = spreadHz; };
 
     /**
      * Call this function at the rate defined by sampleFreq and pass the latest
      * sample from the ADC.  Everything happens here!
      */
     void processSample(q15 sample);
+
+    /**
+     * Call this function to clear the frequency lock and the data 
+     * synchronization.
+    */
+    void reset();
 
     void setFrequencyLock(bool lock);
 

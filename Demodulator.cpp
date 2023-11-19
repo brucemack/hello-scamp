@@ -60,6 +60,12 @@ void Demodulator::setFrequencyLock(bool lock) {
     _frequencyLocked = lock;
 }
 
+void Demodulator::reset() {
+    _frequencyLocked = false;
+    _inDataSync = false;
+    _frameBitCount = 0;
+}
+
 void Demodulator::processSample(q15 sample) {
 
     // Capture the sample in the circular buffer            
@@ -203,116 +209,110 @@ void Demodulator::processSample(q15 sample) {
 
     // ----- Quadrature Demodulation -----------------------------------------
 
-    // Figure out the detection starting point. Back up the length of the 
-    // demodulator series, wrapping as necessary.
-    // 
-    // TEST CASE 2: fftN = 512, demodToneN = 16, readBufferPtr = 15
-    // We need to start at 511.  Gap = 16-15 = 1, start = 512 - 1
-    //
-    uint16_t demodulatorStart = 0;
-    if (readBufferPtr >= _demodulatorToneN) {
-        demodulatorStart = readBufferPtr - _demodulatorToneN;
-    } else {
-        uint16_t gap = _demodulatorToneN - readBufferPtr;
-        demodulatorStart = _fftN - gap;
-    }
+    if (_frequencyLocked) {
 
-    // Correlate recent history with each of the symbol tones
-    for (uint16_t s = 0; s < _symbolCount; s++) {
-        // Here we have automatic wrapping in the _buffer space, so don't
-        // worry if demodulatorStart is close to the end.
-        _symbolCorr[s] = corr_real_complex_2(_buffer, demodulatorStart, _fftN, 
-            _demodulatorTone[s], _demodulatorToneN);
-        // Here we keep track of some recent history of the symbol 
-        // correlation.
-        _symbolCorrFilter[s][_symbolCorrFilterPtr] = _symbolCorr[s];
-    }
-    _symbolCorrFilterPtr = incAndWrap(_symbolCorrFilterPtr, _symbolCorrFilterN);
-
-    // Calculate the recent max and average correlation of each symbol
-    // from the history series.
-    float overallMaxCorr = 0;
-    for (uint16_t s = 0; s < _symbolCount; s++) {
-        _symbolCorrAvg[s] = 0;
-        _symbolCorrMax[s] = 0;
-        for (uint16_t n = 0; n < _symbolCorrFilterN; n++) {
-            float corr = _symbolCorrFilter[s][n];
-            _symbolCorrAvg[s] += corr;
-            _symbolCorrMax[s] = std::max(_symbolCorrMax[s], corr);
-            overallMaxCorr = std::max(overallMaxCorr, corr);
+        // Figure out the detection starting point. Back up the length of the 
+        // demodulator series, wrapping as necessary.
+        // 
+        // TEST CASE 2: fftN = 512, demodToneN = 16, readBufferPtr = 15
+        // We need to start at 511.  Gap = 16-15 = 1, start = 512 - 1
+        //
+        uint16_t demodulatorStart = 0;
+        if (readBufferPtr >= _demodulatorToneN) {
+            demodulatorStart = readBufferPtr - _demodulatorToneN;
+        } else {
+            uint16_t gap = _demodulatorToneN - readBufferPtr;
+            demodulatorStart = _fftN - gap;
         }
-        _symbolCorrAvg[s] /= (float)_symbolCorrFilterN;
-    }
 
-    for (uint16_t s = 0; s < _symbolCount; s++) {
-        _symbolCorrAvgRatio[s] = _symbolCorrAvg[s] / overallMaxCorr;
-    }
-   
-    /*
-    if (_sampleCount >= 1800) {
-        if (_sampleCount % 60 == 0) {
-            cout << "-----" << (_sampleCount / 60) << "-------------------" << endl;
+        // Correlate recent history with each of the symbol tones
+        for (uint16_t s = 0; s < _symbolCount; s++) {
+            // Here we have automatic wrapping in the _buffer space, so don't
+            // worry if demodulatorStart is close to the end.
+            _symbolCorr[s] = corr_real_complex_2(_buffer, demodulatorStart, _fftN, 
+                _demodulatorTone[s], _demodulatorToneN);
+            // Here we keep track of some recent history of the symbol 
+            // correlation.
+            _symbolCorrFilter[s][_symbolCorrFilterPtr] = _symbolCorr[s];
         }
-        cout << _sampleCount << " " << (int)_activeSymbol << " " << 
-            100.0 * (_symbolCorr[1] / overallMaxCorr) << " " << 
-            100.0 * (_symbolCorr[0] / overallMaxCorr) << " / " << 
-            100.0 * _symbolCorrAvgRatio[1] << " " << 
-            100.0 * _symbolCorrAvgRatio[0] << 
-            endl;
-    } 
-    */   
+        _symbolCorrFilterPtr = incAndWrap(_symbolCorrFilterPtr, _symbolCorrFilterN);
 
-    // Look for an inflection point in the respective correlations 
-    // of the symbols.  
-    if (_activeSymbol == 0) {
-        // Look for transition to 1
-        if (_symbolCorrAvgRatio[1] >= _symbolCorrThreshold && 
-            _symbolCorrAvgRatio[0] <= _symbolCorrThreshold) {
-            _activeSymbol = 1;
-            _listener->bitTransitionDetected();
+        // Calculate the recent max and average correlation of each symbol
+        // from the history series.
+        float overallMaxCorr = 0;
+        for (uint16_t s = 0; s < _symbolCount; s++) {
+            _symbolCorrAvg[s] = 0;
+            _symbolCorrMax[s] = 0;
+            for (uint16_t n = 0; n < _symbolCorrFilterN; n++) {
+                float corr = _symbolCorrFilter[s][n];
+                _symbolCorrAvg[s] += corr;
+                _symbolCorrMax[s] = std::max(_symbolCorrMax[s], corr);
+                overallMaxCorr = std::max(overallMaxCorr, corr);
+            }
+            _symbolCorrAvg[s] /= (float)_symbolCorrFilterN;
         }
-    } else {
-        // Look for transition to 0
-        if (_symbolCorrAvgRatio[0] >= _symbolCorrThreshold && 
-            _symbolCorrAvgRatio[1] <= _symbolCorrThreshold) {
-            _activeSymbol = 0;
-            _listener->bitTransitionDetected();
+
+        for (uint16_t s = 0; s < _symbolCount; s++) {
+            _symbolCorrAvgRatio[s] = _symbolCorrAvg[s] / overallMaxCorr;
         }
-    }
+    
+        // Look for an inflection point in the respective correlations 
+        // of the symbols.  
+        if (_activeSymbol == 0) {
+            // Look for transition to 1
+            if (_symbolCorrAvgRatio[1] >= _symbolCorrThreshold && 
+                _symbolCorrAvgRatio[0] <= _symbolCorrThreshold) {
+                _activeSymbol = 1;
+                _listener->bitTransitionDetected();
+            }
+        } else {
+            // Look for transition to 0
+            if (_symbolCorrAvgRatio[0] >= _symbolCorrThreshold && 
+                _symbolCorrAvgRatio[1] <= _symbolCorrThreshold) {
+                _activeSymbol = 0;
+                _listener->bitTransitionDetected();
+            }
+        }
 
-    // Show the sample to the PLL for clock recovery
-    bool capture = _pll.processSample(_activeSymbol == 1);
+        // Show the sample to the PLL for clock recovery
+        bool capture = _pll.processSample(_activeSymbol == 1);
 
-    // Report out all of the key parameters
-    _listener->sampleMetrics(_activeSymbol, capture, _pll.getLastError(), _symbolCorr,
-        _symbolCorrAvg, overallMaxCorr);
+        // Report out all of the key parameters
+        _listener->sampleMetrics(_activeSymbol, capture, _pll.getLastError(), _symbolCorr,
+            _symbolCorrAvg, overallMaxCorr);
 
-    // Process the sample if we are told to do so by the data clock
-    // recovery PLL.
-    if (capture) {
+        // Process the sample if we are told to do so by the data clock
+        // recovery PLL.
+        if (capture) {
 
-        // Bring in the next bit. 
-        _frameBitAccumulator <<= 1;
-        _frameBitAccumulator |= (_activeSymbol == 1) ? 1 : 0;
-        _listener->receivedBit(_activeSymbol == 1, _frameBitCount);
-        _frameBitCount++;
-        
-        if (!_inDataSync) {
-            // Look for sync frame, or something very close to it.
-            if (abs(Frame30::correlate30(_frameBitAccumulator, Frame30::SYNC_FRAME.getRaw())) > 29) {
+            // Bring in the next bit. 
+            _frameBitAccumulator <<= 1;
+            _frameBitAccumulator |= (_activeSymbol == 1) ? 1 : 0;
+
+            // Look for the synchronization frame by correlated with the magic sequence            
+            const int syncFrameCorr = abs(
+                Frame30::correlate30(_frameBitAccumulator, Frame30::SYNC_FRAME.getRaw())
+            );
+
+            _listener->receivedBit(_activeSymbol == 1, _frameBitCount, syncFrameCorr);
+
+            _frameBitCount++;
+
+            // At all times are are looking for the sync frame, or something very close to it.
+            if (syncFrameCorr > 28) {
                 _inDataSync = true;
                 _frameBitCount = 0;
                 _listener->dataSyncAcquired()                        ;
             }
-        }
-        // Here we are consuming real data frames
-        else {
-            if (_frameBitCount == 30) {
+            // Check to see if we have accumulated a complete data frame
+            else if (_frameBitCount == 30) {
                 _frameBitCount = 0;
                 _frameCount++;
                 Frame30 frame(_frameBitAccumulator & Frame30::MASK30LSB);
                 if (!frame.isValid()) {      
-                    _listener->badFrameReceived(frame.getRaw());
+                    if (_inDataSync) {
+                        _listener->badFrameReceived(frame.getRaw());
+                    }
                 } else {
                     _listener->goodFrameReceived();
                     CodeWord24 cw24 = frame.toCodeWord24();

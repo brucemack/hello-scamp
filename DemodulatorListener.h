@@ -33,7 +33,7 @@ public:
     virtual void badFrameReceived(uint32_t rawFrame) { }
     virtual void received(char asciiChar) { }
     virtual void bitTransitionDetected() { }
-    virtual void receivedBit(bool bit, uint16_t frameBitPos) { }
+    virtual void receivedBit(bool bit, uint16_t frameBitPos, int syncFrameCorr) { }
     // The key data used to identify symbols
     virtual void sampleMetrics(uint8_t activeSymbol, bool capture, 
         int32_t lastPLLError,
