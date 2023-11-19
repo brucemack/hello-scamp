@@ -59,6 +59,9 @@ static float samples[S];
 const uint16_t log2fftN = 9;
 const uint16_t fftN = 1 << log2fftN;
 
+// Allocate 1 second of sample data
+TestDemodulatorListener::Sample SampleArea[2000];
+
 int main(int, const char**) {
 
     memset((void*)samples, 0, sizeof(samples));
@@ -134,13 +137,15 @@ int main(int, const char**) {
     // Now decode without any prior knowledge of the frequency or phase
     // of the transmitter.
     {
+        TestDemodulatorListener testListener(SampleArea, 2000);
+        testListener.setTriggerMode(TestDemodulatorListener::TriggerMode::ON_LOCK);
+
         // Space for the demodulator to work in (no dynamic memory allocation!)
         q15 trigTable[fftN];
         q15 window[fftN];
         q15 buffer[fftN];
         cq15 fftResult[fftN];
 
-        TestDemodulatorListener testListener;
         Demodulator demod(sampleFreq, lowFreq, log2fftN,
             trigTable, window, fftResult, buffer);
         demod.setListener(&testListener);
@@ -151,9 +156,6 @@ int main(int, const char**) {
         while (samplePtr < modem2.getSamplesUsed()) {            
             const q15 sample = f32_to_q15(samples[samplePtr++]);
             demod.processSample(sample);
-            //if (samplePtr > 1800 + (60 * 30)) {
-            //    break;
-            //}
         }
 
         cout << "FRAMES  : " << demod.getFrameCount() << endl;
@@ -162,6 +164,9 @@ int main(int, const char**) {
         cout << "MARK HZ : " << demod.getMarkFreq() << endl;
         cout << "MESSAGE : " << testListener.getMessage() << endl;
         assertm(testListener.getMessage() == testMessage, "Message Failure");
+
+        // Demo the trace
+        //testListener.dumpSamples(cout);
     }
 }
 

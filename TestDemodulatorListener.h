@@ -30,17 +30,48 @@ namespace scamp {
 class TestDemodulatorListener : public DemodulatorListener {
 public:
 
+    struct Sample {
+        uint8_t activeSymbol;
+        uint8_t capture;
+        int32_t pllError;
+        float symbolCorr[2];
+        float symbolCorrAvg[2];
+        float maxCorr;
+    };
+
+    enum TriggerMode { NONE, MANUAL, ON_LOCK };
+
+    TestDemodulatorListener();
+    TestDemodulatorListener(Sample* sampleSpace, uint16_t sampleSpaceSize);
+
     virtual void dataSyncAcquired();
     virtual void frequencyLocked(uint16_t markFreq, uint16_t spaceFreq);
     virtual void badFrameReceived(uint32_t rawFrame);
     virtual void goodFrameReceived();
     virtual void received(char asciiChar);
+    virtual void sampleMetrics(uint8_t activeSymbol, bool capture, 
+        int32_t pllError,
+        float* symbolCorr, float* symbolCorrAvg, float maxCorr);
 
     std::string getMessage() const;
+
+    void setTriggerMode(TriggerMode mode);
+    void setTriggered(bool triggered);
+    void setTriggerDelay(uint16_t delaySamples);
+
+    void clearSamples();
+    void dumpSamples(std::ostream& str) const;
 
 private:
 
     std::ostringstream _out;
+    Sample* _sampleSpace = 0;
+    uint16_t _sampleSpaceSize = 0;
+    uint16_t _sampleSpacePtr = 0;
+    bool _triggered = false;
+    TriggerMode _triggerMode = NONE;
+    uint16_t _triggerDelay = 0;
+    uint16_t _delayCounter = 0;
 };
 
 }

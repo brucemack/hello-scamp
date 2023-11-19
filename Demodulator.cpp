@@ -282,7 +282,11 @@ void Demodulator::processSample(q15 sample) {
 
     // Show the sample to the PLL for clock recovery
     bool capture = _pll.processSample(_activeSymbol == 1);
-        
+
+    // Report out all of the key parameters
+    _listener->sampleMetrics(_activeSymbol, capture, _pll.getLastError(), _symbolCorr,
+        _symbolCorrAvg, overallMaxCorr);
+
     // Process the sample if we are told to do so by the data clock
     // recovery PLL.
     if (capture) {

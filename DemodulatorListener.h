@@ -34,7 +34,10 @@ public:
     virtual void received(char asciiChar) { }
     virtual void bitTransitionDetected() { }
     virtual void receivedBit(bool bit, uint16_t frameBitPos) { }
-    virtual void symbolCorrs(uint32_t sample, uint16_t symbolCount, float* symbolCorrs) { }
+    // The key data used to identify symbols
+    virtual void sampleMetrics(uint8_t activeSymbol, bool capture, 
+        int32_t lastPLLError,
+        float* symbolCorr, float* symbolCorrAvg, float maxCorr) { }
 };
 
 }

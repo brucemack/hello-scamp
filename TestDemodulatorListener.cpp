@@ -21,6 +21,16 @@ using namespace std;
 
 namespace scamp {
 
+TestDemodulatorListener::TestDemodulatorListener() {
+    _sampleSpace = 0;
+    _sampleSpaceSize = 0;
+}
+
+TestDemodulatorListener::TestDemodulatorListener(Sample* sampleSpace, uint16_t sampleSpaceSize) {
+    _sampleSpace = sampleSpace;
+    _sampleSpaceSize = sampleSpaceSize;
+}
+
 void TestDemodulatorListener::dataSyncAcquired() {
     cout << "Data Sync Acquired" << endl;
 }
@@ -28,6 +38,11 @@ void TestDemodulatorListener::dataSyncAcquired() {
 void TestDemodulatorListener::frequencyLocked(uint16_t markFreq, 
     uint16_t spaceFreq) {
     cout << "Frequency locked at mark=" << markFreq << ", space=" << spaceFreq << endl;
+    // Check to see if we should trigger
+    if (_triggerMode == ON_LOCK) {
+        _triggered = true;
+        _delayCounter = _triggerDelay;
+    }
 }
 
 void TestDemodulatorListener::badFrameReceived(uint32_t rawFrame) {
@@ -43,6 +58,69 @@ string TestDemodulatorListener::getMessage() const {
 }
 
 void TestDemodulatorListener::goodFrameReceived() {
+}
+
+void TestDemodulatorListener::sampleMetrics(uint8_t activeSymbol, bool capture, 
+   int32_t pllError,
+   float* symbolCorr, float* symbolCorrAvg, float maxCorr) {
+
+    if (_triggered) {
+        if (_delayCounter > 0) {
+            _delayCounter--;
+        } else {
+            if (_sampleSpacePtr < _sampleSpaceSize) {
+                // Make a sample
+                Sample* s = &(_sampleSpace[_sampleSpacePtr]);
+                s->activeSymbol = activeSymbol;
+                s->capture = capture;
+                s->pllError = pllError;
+                s->symbolCorr[0] = symbolCorr[0];
+                s->symbolCorr[1] = symbolCorr[1];
+                s->symbolCorrAvg[0] = symbolCorrAvg[0];
+                s->symbolCorrAvg[1] = symbolCorrAvg[1];
+                s->maxCorr = maxCorr;
+                _sampleSpacePtr++;
+            }
+        }
+    }
+}
+
+void TestDemodulatorListener::setTriggerMode(TriggerMode mode) {
+    _triggerMode = mode;
+}
+
+void TestDemodulatorListener::setTriggered(bool t) {
+    _triggered = t;
+}
+
+void TestDemodulatorListener::setTriggerDelay(uint16_t d) {
+    _triggerDelay = d;
+}
+
+void TestDemodulatorListener::clearSamples() {
+    _sampleSpacePtr = 0;
+}
+
+void TestDemodulatorListener::dumpSamples(std::ostream& str) const {
+    for (uint16_t i = 0; i < _sampleSpacePtr; i++) {
+        if (i % 60 == 0) {
+            str << "--------" << endl;
+        }
+        Sample* s = &(_sampleSpace[i]);
+        str << i << " " 
+            << i / 60 << " "
+            << (int)s->activeSymbol << " " 
+            << (int)s->capture << " " 
+            << s->pllError << " " 
+            << s->maxCorr << " " 
+            << s->symbolCorr[1] << " " 
+            << s->symbolCorr[0] << " " 
+            << s->symbolCorrAvg[1] << " " 
+            << s->symbolCorrAvg[0] << " " 
+            << (int)(100.0 * (s->symbolCorrAvg[1] / s->maxCorr)) << " " 
+            << (int)(100.0 * (s->symbolCorrAvg[0] / s->maxCorr)) << " " 
+            << endl;
+    }
 }
 
 }
