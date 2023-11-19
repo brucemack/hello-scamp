@@ -54,6 +54,7 @@ void TestDemodulatorListener::badFrameReceived(uint32_t rawFrame) {
 
 void TestDemodulatorListener::received(char asciiChar) {
     _msg << asciiChar;
+    //_out << "CHAR: " << asciiChar << endl;
 }
 
 string TestDemodulatorListener::getMessage() const {
@@ -88,13 +89,16 @@ void TestDemodulatorListener::sampleMetrics(uint8_t activeSymbol, bool capture,
     }
 }
 
+void TestDemodulatorListener::bitTransitionDetected() {
+}
+
 void TestDemodulatorListener::receivedBit(bool bit, uint16_t frameBitPos, 
     int syncFrameCorr) {
-    if (frameBitPos == 0) {
-        _out << "====" << endl;
-    }
-    _out << "BIT (" << frameBitPos << ") = " << (int)bit 
-        << ", c=" << syncFrameCorr << endl;
+    //if (frameBitPos == 0) {
+    //    _out << "====" << endl;
+    //}
+    //_out << "BIT (" << frameBitPos << ") = " << (int)bit 
+    //    << ", c=" << syncFrameCorr << endl;
 }
 
 void TestDemodulatorListener::setTriggerMode(TriggerMode mode) {

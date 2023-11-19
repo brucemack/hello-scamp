@@ -43,15 +43,15 @@ void ClockRecoveryPLL::setBitFrequencyHint(unsigned int bitFrequency) {
     _offset = (1L << 16) / samplesPerBit;
 }
 
-uint32_t ClockRecoveryPLL::getFrequency() const {   
+uint32_t ClockRecoveryPLL::getDataFrequency() const {   
     return (_sampleRate * (_omega + _offset)) >> 16;
 }
 
-bool ClockRecoveryPLL::processSample(bool mark) {
+bool ClockRecoveryPLL::processSample(uint8_t symbol) {
     
     // Look for the edge.  Only on edges do we adjust the phase.
-    if (_lastSample != mark) {        
-        _lastSample = mark;
+    if (_lastSymbol != symbol) {        
+        _lastSymbol = symbol;
         _samplesSinceEdge = 0;
         // When coming in from idle, pretend like we are perfectly in sync to 
         // avoid a huge initial error.

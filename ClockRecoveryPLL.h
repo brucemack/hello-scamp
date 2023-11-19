@@ -18,13 +18,14 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #define _ClockRecoveryPLL_H
 
 #include <cstdint>
+#include "ClockRecovery.h"
 
 namespace scamp {
 
     /**
      * A PLL class used for recovering the bit clock on an input stream.
      */
-    class ClockRecoveryPLL {
+    class ClockRecoveryPLL : public ClockRecovery {
     public:
 
         /**
@@ -47,15 +48,16 @@ namespace scamp {
          * caller should use the sample as the observation of the curent bit. If
          * the return is false then just ignore the sample and keep going.
          */
-        bool processSample(bool sample);
+        bool processSample(uint8_t symbol);
 
         int32_t getIntegration() const { return _integration; }
+
         int32_t getLastError() const { return _lastError; }
 
         /**
          * @returns The lock frequency in Hertz.
          */
-        uint32_t getFrequency() const;
+        uint32_t getDataFrequency() const;
 
         /**
          * @returns The number of samples received since the last edge
@@ -78,7 +80,7 @@ namespace scamp {
         int16_t _offset;
         int32_t _lastError = 0;
         uint16_t _lastPhi = 0;
-        bool _lastSample = false;
+        uint8_t _lastSymbol = 0;
         uint16_t _samplesSinceEdge = 0;
     };
 }

@@ -52,7 +52,7 @@ const unsigned int spaceFreq = 600;
 // Here we can inject a tuning error to show that the demodulator will
 // still find the signal.
 const unsigned int tuningErrorHz = 0;
-const unsigned int S = 34 * 30 * samplesPerSymbol;
+const unsigned int S = 2 * 34 * 30 * samplesPerSymbol;
 static float samples[S];
 
 // The size of the FFT used for frequency acquisition
@@ -95,9 +95,9 @@ int main(int, const char**) {
     // using the SCAMP FSK (33.3 bits per second) format.  
     {        
         // Encode the message.  This leads to about 25K samples.
-        Frame30 frames[32];
-        unsigned int frameCount = encodeString(testMessage, frames, 32, true);
-        assertm(frameCount < 32, "FRAME COUNT");
+        Frame30 frames[45];
+        unsigned int frameCount = encodeString(testMessage, frames, 45, true);
+        assertm(frameCount < 45, "FRAME COUNT");
     
         // We purposely offset the data stream by a half symbol 
         // to stress the PLL.
@@ -110,6 +110,14 @@ int main(int, const char**) {
             frames[i].transmit(modem2);
             frames[i].transmit(printModem);
         }
+        // Trailing silence
+        //for (unsigned int i = 0; i < 5; i++) {
+        //    modem2.sendSilence();
+        //}
+        // Transmit the encoded message frames a second time
+        //for (unsigned int i = 0; i < frameCount; i++) {
+        //    frames[i].transmit(modem2);
+        //}
         // Trailing silence
         for (unsigned int i = 0; i < 30; i++) {
             modem2.sendSilence();

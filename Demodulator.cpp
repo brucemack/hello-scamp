@@ -106,8 +106,6 @@ void Demodulator::processSample(q15 sample) {
         //const uint16_t maxBin = max_idx(_fftResult, _firstBin, _fftN / 2);
         const uint16_t maxBin = max_idx_2(_fftResult, _firstBin, _fftN / 2);
 
-        //render_spectrum(cout, _fftResult, _fftN, _sampleFreq);
-
          // Capture DC magnitude for diagnostics
         _lastDCPower = _fftResult[0].mag_f32_squared();
  
@@ -165,22 +163,6 @@ void Demodulator::processSample(q15 sample) {
                 // TODO: REMOVE FLOATING POINT 
                 float hitPct = (float)hitCount / (float)binHistoryLength;
 
-                /*
-                if (_blockCount >= 55) {
-                    cout << "Max Bin History: [";
-                    for (int i = 0; i < _maxBinHistorySize; i++) {
-                        cout << _maxBinHistory[i] << " ";
-                    }
-                    cout << "]" << endl;
-                    cout << "Long Mark Blocks " << _longMarkBlocks << endl;
-                    cout << "History Size " << _maxBinHistorySize << endl;
-                    cout << "Start IDX " << binHistoryStart << endl;
-                    cout << "Considering " << binHistoryLength << endl;
-                    cout << "HIT PERCENT " << 100.0 * hitPct << endl;
-                    cout << "maxBinPowerFract " << maxBinPowerFract << endl;
-                }
-                */
-
                 // If one bin is dominating then perform a lock
                 if (hitPct > 0.9 && maxBinPowerFract > 0.10) {
 
@@ -197,11 +179,6 @@ void Demodulator::processSample(q15 sample) {
                         _sampleFreq, lockedMarkHz, 0.5);
 
                     _listener->frequencyLocked(lockedMarkHz, lockedSpaceHz);                    
-
-                    //cout << "max=" << q15_to_f32(max_q15(_buffer, _fftN)) << " "
-                    //     << "min=" << q15_to_f32(min_q15(_buffer, _fftN)) << " "
-                    //     << "avg=" << q15_to_f32(mean_q15(_buffer, 9)) << endl;
-                    //render_spectrum(cout, _fftResult, _fftN, _sampleFreq);
                 }
             }
         }
@@ -275,7 +252,7 @@ void Demodulator::processSample(q15 sample) {
         }
 
         // Show the sample to the PLL for clock recovery
-        bool capture = _pll.processSample(_activeSymbol == 1);
+        bool capture = _pll.processSample(_activeSymbol);
 
         // Report out all of the key parameters
         _listener->sampleMetrics(_activeSymbol, capture, _pll.getLastError(), _symbolCorr,
