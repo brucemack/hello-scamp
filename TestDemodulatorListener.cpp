@@ -89,12 +89,16 @@ void TestDemodulatorListener::setTriggerMode(TriggerMode mode) {
     _triggerMode = mode;
 }
 
-void TestDemodulatorListener::setTriggered(bool t) {
-    _triggered = t;
-}
-
 void TestDemodulatorListener::setTriggerDelay(uint16_t d) {
     _triggerDelay = d;
+}
+
+void TestDemodulatorListener::setTriggered(bool t) {
+    _triggered = t;
+    if (_triggered) {
+        _delayCounter = _triggerDelay;
+        _sampleSpacePtr = 0;
+    }
 }
 
 void TestDemodulatorListener::clearSamples() {
