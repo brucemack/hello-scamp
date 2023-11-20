@@ -43,7 +43,7 @@ void ClockRecoveryPLL::setBitFrequencyHint(unsigned int bitFrequency) {
     _offset = (1L << 16) / samplesPerBit;
 }
 
-uint32_t ClockRecoveryPLL::getDataFrequency() const {   
+uint32_t ClockRecoveryPLL::getClockFrequency() const {   
     return (_sampleRate * (_omega + _offset)) >> 16;
 }
 

@@ -68,6 +68,10 @@ void TestDemodulatorListener::sampleMetrics(uint8_t activeSymbol, bool capture,
    int32_t pllError,
    float* symbolCorr, float* symbolCorrAvg, float maxCorr) {
 
+    //if (capture) {
+    //    cout << pllError << endl;
+    //}
+
     if (_triggered) {
         if (_delayCounter > 0) {
             _delayCounter--;

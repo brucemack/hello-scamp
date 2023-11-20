@@ -35,12 +35,12 @@ Demodulator::Demodulator(uint16_t sampleFreq, uint16_t lowestFreq, uint16_t log2
     _fftWindow(fftWindow),
     _fftResult(fftResultSpace),
     _fft(_fftN, fftTrigTable),
-    _pll(sampleFreq),
+    _dataClockRecovery(sampleFreq),
     _buffer(bufferSpace) { 
 
-    // NOTICE: We are purposely setting the initial frequency slightly 
-    // wrong to show that PLL will adjust accordingly.
-    _pll.setBitFrequencyHint(36);
+    // FSK SCAMP is 33.3 bits/second
+    _dataClockRecovery.setClockFrequency(33);
+    //_dataClockRecovery.setBitFrequencyHint(33);
 
     // Build the Hann window for the FFT (raised cosine) if a space has 
     // been provided for it.
@@ -64,6 +64,10 @@ void Demodulator::reset() {
     _frequencyLocked = false;
     _inDataSync = false;
     _frameBitCount = 0;
+}
+
+int32_t Demodulator::getPLLIntegration() const {
+    return 0;
 }
 
 void Demodulator::processSample(q15 sample) {
@@ -252,10 +256,10 @@ void Demodulator::processSample(q15 sample) {
         }
 
         // Show the sample to the PLL for clock recovery
-        bool capture = _pll.processSample(_activeSymbol);
+        bool capture = _dataClockRecovery.processSample(_activeSymbol);
 
         // Report out all of the key parameters
-        _listener->sampleMetrics(_activeSymbol, capture, _pll.getLastError(), _symbolCorr,
+        _listener->sampleMetrics(_activeSymbol, capture, _dataClockRecovery.getLastError(), _symbolCorr,
             _symbolCorrAvg, overallMaxCorr);
 
         // Process the sample if we are told to do so by the data clock

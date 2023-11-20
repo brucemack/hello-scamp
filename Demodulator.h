@@ -23,6 +23,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "fixed_fft.h"
 #include "DemodulatorListener.h"
 #include "ClockRecoveryPLL.h"
+#include "ClockRecoveryDLL.h"
 
 #define SYMBOL_COUNT (2)
 
@@ -64,7 +65,7 @@ public:
 
     bool isFrequencyLocked() const { return _frequencyLocked; }
     uint16_t getFrameCount() const { return _frameCount; };
-    int32_t getPLLIntegration() const { return _pll.getIntegration(); };
+    int32_t getPLLIntegration() const;
     float getLastDCPower() const { return _lastDCPower; };
     uint16_t getMarkFreq() const;
 
@@ -80,7 +81,8 @@ private:
     q15* _fftWindow;
     cq15* _fftResult;
     FixedFFT _fft;
-    ClockRecoveryPLL _pll;
+    //ClockRecoveryPLL _dataClockRecovery;
+    ClockRecoveryDLL _dataClockRecovery;
 
     // FFT is performed every time this number of samples is collected
     const uint16_t _blockSize = 32;

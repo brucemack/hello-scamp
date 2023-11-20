@@ -35,13 +35,18 @@ public:
     /**
      * @returns The lock frequency in Hertz.
      */
-    virtual uint32_t getDataFrequency() const = 0;
+    virtual uint32_t getClockFrequency() const = 0;
 
     /**
      * @returns The number of samples received since the last edge
      *   transition.
      */
     virtual uint16_t getSamplesSinceEdge() const = 0;
+
+    /**
+     * @returns The last phase error from -1 to +1. 0 Means the phase is perfect.
+     */
+    virtual float getLastPhaseError() const = 0;
 };
 
 }

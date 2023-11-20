@@ -28,6 +28,19 @@ add_executable(unit-test-3
   Demodulator.cpp TestDemodulatorListener.cpp
 )
 
+add_executable(unit-test-2
+  unit-test-2.cpp 
+  fixed_math.cpp 
+  fixed_fft.cpp 
+  Util.cpp
+  ClockRecoveryPLL.cpp
+  ClockRecoveryDLL.cpp
+  Symbol6.cpp 
+  CodeWord12.cpp 
+  CodeWord24.cpp 
+  Frame30.cpp   
+)
+
 add_executable(unit-test-4
   unit-test-4.cpp 
   Util.cpp

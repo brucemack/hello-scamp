@@ -54,10 +54,12 @@ namespace scamp {
 
         int32_t getLastError() const { return _lastError; }
 
+        float getLastPhaseError() const { return 0; }
+
         /**
          * @returns The lock frequency in Hertz.
          */
-        uint32_t getDataFrequency() const;
+        uint32_t getClockFrequency() const;
 
         /**
          * @returns The number of samples received since the last edge

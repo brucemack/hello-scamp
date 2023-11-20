@@ -29,9 +29,10 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "TestModem.h"
 #include "TestModem2.h"
 #include "FileModulator.h"
-#include "ClockRecoveryPLL.h"
+//#include "ClockRecoveryPLL.h"
+//#include "ClockRecoveryDLL.h"
 #include "fixed_math.h"
-#include "fixed_fft.h"
+//#include "fixed_fft.h"
 #include "Demodulator.h"
 #include "TestDemodulatorListener.h"
 
@@ -82,42 +83,44 @@ int main(int, const char**) {
     // Note that we have applied random noise to the signal to ensure that 
     // this doesn't create a problem.
     TestModem2 modem2(samples, S, sampleFreq, samplesPerSymbol, 
-        markFreq + tuningErrorHz, spaceFreq + tuningErrorHz, 0.3, 0.1, 0.05);
+        markFreq + tuningErrorHz, spaceFreq + tuningErrorHz, 0.3, 0.1, 0.07);
 
     // This is a modem that is used to capture the data for printing.
     int8_t printSamples[34 * 30];
     TestModem printModem(printSamples, sizeof(printSamples), 1);
 
-    const char* testMessage = "DE KC1FSZ, GOOD MORNING";
+    const char* testMessage1 = "DE KC1FSZ, GOOD MORNING";
+    const char* testMessage2 = "73S, HAVE A GOOD DAY";
     
     // =========================================================================
     // Make a message, encode it, and then recover it. In this test we are 
     // using the SCAMP FSK (33.3 bits per second) format.  
     {        
         // Encode the message.  This leads to about 25K samples.
-        Frame30 frames[45];
-        unsigned int frameCount = encodeString(testMessage, frames, 45, true);
-        assertm(frameCount < 45, "FRAME COUNT");
+        Frame30 frames[32];
+
+        unsigned int frameCount1 = encodeString(testMessage1, frames, 45, true);
+        assertm(frameCount1 < 32, "FRAME COUNT");
     
-        // We purposely offset the data stream by a half symbol 
-        // to stress the PLL.
-        //modem2.sendHalfSilence();
         // This silence is 30 symbols, or 30 * 60 = 1800 samples long
         for (unsigned int i = 0; i < 30; i++)
             modem2.sendSilence();
-        // Transmit the encoded message frames
-        for (unsigned int i = 0; i < frameCount; i++) {
+
+        for (unsigned int i = 0; i < frameCount1; i++) {
             frames[i].transmit(modem2);
             frames[i].transmit(printModem);
         }
         // Trailing silence
-        //for (unsigned int i = 0; i < 5; i++) {
-        //    modem2.sendSilence();
-        //}
-        // Transmit the encoded message frames a second time
-        //for (unsigned int i = 0; i < frameCount; i++) {
-        //    frames[i].transmit(modem2);
-        //}
+        for (unsigned int i = 0; i < 30; i++) {
+            modem2.sendSilence();
+        }
+
+        unsigned int frameCount2 = encodeString(testMessage2, frames, 45, true);
+        assertm(frameCount2 < 32, "FRAME COUNT");
+
+        for (unsigned int i = 0; i < frameCount2; i++) {
+            frames[i].transmit(modem2);
+        }
         // Trailing silence
         for (unsigned int i = 0; i < 30; i++) {
             modem2.sendSilence();
@@ -171,7 +174,8 @@ int main(int, const char**) {
         cout << "LAST DC : " << demod.getLastDCPower() << endl;
         cout << "MARK HZ : " << demod.getMarkFreq() << endl;
         cout << "MESSAGE : " << testListener.getMessage() << endl;
-        assertm(testListener.getMessage() == testMessage, "Message Failure");
+        assertm(testListener.getMessage() == "DE KC1FSZ, GOOD MORNING73S, HAVE A GOOD DAY", 
+            "Message Failure");
 
         // Demo the trace
         //testListener.dumpSamples(cout);

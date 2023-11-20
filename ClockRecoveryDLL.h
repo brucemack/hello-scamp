@@ -34,7 +34,7 @@ public:
     */
     ClockRecoveryDLL(uint16_t sampleRate = 2000);
 
-    void setDataFrequency(uint16_t hz);
+    void setClockFrequency(uint16_t hz);
 
     /**
      * This is the main function.  Call this at the sample rate frequency with 
@@ -44,18 +44,22 @@ public:
      */
     bool processSample(uint8_t symbol);
 
-    int16_t getLastError() const { return _lastError; }
+    int32_t getIntegration() const { return 0; }
+
+    int16_t getLastError() const;
+
+    float getLastPhaseError() const;
 
     /**
      * @returns The lock frequency in Hertz.
      */
-    uint32_t getDataFrequency() const;
+    uint32_t getClockFrequency() const;
 
     /**
      * @returns The number of samples received since the last edge
      *   transition.
      */
-    uint16_t getSamplesSinceEdge() const { return _samplesSinceEdge; }
+    uint16_t getSamplesSinceEdge() const;
 
 private:
 
@@ -70,6 +74,7 @@ private:
     uint16_t _samplesSinceEdge = 0;
     int16_t _lastError = 0;
     uint8_t _lastSymbol = 0;
+    int32_t _errorIntegration = 0;
 };
 
 }

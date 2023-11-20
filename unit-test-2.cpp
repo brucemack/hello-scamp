@@ -17,36 +17,46 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include <iostream>
 #include <cmath>
 #include "ClockRecoveryPLL.h"
+#include "ClockRecoveryDLL.h"
 
 using namespace std;
 using namespace scamp;
 
 int main(int argc, const char** argv) {
 
-    ClockRecoveryPLL pll(2000);
-    pll.setBitFrequencyHint(50);
+    //ClockRecoveryPLL clockRecovery(2000);
+    ClockRecoveryDLL clockRecovery(2000);
+    clockRecovery.setClockFrequency(33);
 
-    int bits[8] = { 1, 0, 1, 0, 1, 0, 1, 0 };
+    int bits[8] = { 0, 1, 0, 1, 0, 1, 0, 1 };
 
     cout << "TIME" << "," << "ERROR" << "," << "INT" << "," << "FREQ" << endl;
 
     uint16_t t = 0;
     // Repeats
-    for (unsigned int k = 0; k < 16; k++) {
+    for (unsigned int k = 0; k < 1; k++) {
         // Bit loop
         for (unsigned int bit = 0; bit < 8; bit++) {
+            cout << "=================" << endl;
             // Oversampling loop
             for (unsigned int sample = 0; sample < 60; sample++) {
-                bool mark = bits[bit] ? true : false;
-                bool edge = pll.processSample(mark);
-                cout << t << "," << pll.getLastError() << "," << pll.getIntegration() << "," << 
-                    pll.getFrequency() << "," << edge << endl;
+                bool capture = clockRecovery.processSample((uint8_t)bits[bit]);
+                if (capture) {
+                    cout << "<" << endl;
+                }
+                cout << t 
+                    << "," << (int)bits[bit] 
+                    << "," << capture 
+                    << "," << clockRecovery.getLastPhaseError() 
+                    << "," << clockRecovery.getIntegration() 
+                    << "," << clockRecovery.getClockFrequency() << endl;
                 t++;
             }
         }
     }
 }
 
+/*
 int main2(int argc, const char** argv) {
 
     ClockRecoveryPLL pll(2000);
@@ -72,3 +82,4 @@ int main2(int argc, const char** argv) {
 
     return 0;
 }
+*/
