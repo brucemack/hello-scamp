@@ -11,7 +11,9 @@ add_executable(unit-test-7a
   unit-test-7a.cpp 
   Symbol6.cpp CodeWord12.cpp CodeWord24.cpp 
   Frame30.cpp FileModulator.cpp Util.cpp TestModem.cpp 
-  TestModem2.cpp ClockRecoveryPLL.cpp
+  TestModem2.cpp 
+  ClockRecoveryPLL.cpp
+  ClockRecoveryDLL.cpp
   fixed_math.cpp fixed_fft.cpp 
   Demodulator.cpp TestDemodulatorListener.cpp
 )
