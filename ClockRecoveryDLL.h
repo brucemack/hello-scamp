@@ -23,7 +23,8 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 namespace scamp {
 
 /**
- * A PLL class used for recovering the bit clock on an input stream.
+ * A Delay Locked LooP (DLL) class used for recovering the bit clock on an 
+ * input stream.
  */
 class ClockRecoveryDLL : public ClockRecovery {
 public:
@@ -34,7 +35,10 @@ public:
     */
     ClockRecoveryDLL(uint16_t sampleRate = 2000);
 
-    void setClockFrequency(uint16_t hz);
+    /**
+     * @param clockFreqHz Set this to the expected data clock frequency.
+    */
+    void setClockFrequency(uint16_t clockFreqHz);
 
     /**
      * This is the main function.  Call this at the sample rate frequency with 
