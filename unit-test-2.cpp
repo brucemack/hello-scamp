@@ -47,7 +47,7 @@ int main(int argc, const char** argv) {
                 cout << t 
                     << "," << (int)bits[bit] 
                     << "," << capture 
-                    << "," << clockRecovery.getLastPhaseError() 
+                    << "," << (100.0f * clockRecovery.getLastPhaseError()) 
                     << "," << clockRecovery.getIntegration() 
                     << "," << clockRecovery.getClockFrequency() << endl;
                 t++;

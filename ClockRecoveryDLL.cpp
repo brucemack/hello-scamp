@@ -52,8 +52,8 @@ void ClockRecoveryDLL::_edgeDetected() {
     _errorIntegration += error;
 
     // Apply the gain
-    int32_t adj = (error >> 1) + (error >> 2);
-    //int32_t adj = error;
+    //int32_t adj = (error >> 1) + (error >> 2);
+    int32_t adj = (error >> 1);
 
     /*
     cout << "_phi=" << _phi << ", _targetPhi=" << _targetPhi << ", omega=" << _omega 

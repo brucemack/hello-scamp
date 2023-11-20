@@ -70,6 +70,10 @@ int32_t Demodulator::getPLLIntegration() const {
     return 0;
 }
 
+float Demodulator::getClockRecoveryPhaseError() const {
+    return _dataClockRecovery.getLastPhaseError();
+}
+
 void Demodulator::processSample(q15 sample) {
 
     // Capture the sample in the circular buffer            

@@ -66,6 +66,7 @@ public:
     bool isFrequencyLocked() const { return _frequencyLocked; }
     uint16_t getFrameCount() const { return _frameCount; };
     int32_t getPLLIntegration() const;
+    float getClockRecoveryPhaseError() const;
     float getLastDCPower() const { return _lastDCPower; };
     uint16_t getMarkFreq() const;
 

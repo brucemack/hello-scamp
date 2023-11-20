@@ -122,9 +122,9 @@ int main(int, const char**) {
             frames[i].transmit(modem2);
         }
         // Trailing silence
-        for (unsigned int i = 0; i < 30; i++) {
-            modem2.sendSilence();
-        }
+        //for (unsigned int i = 0; i < 30; i++) {
+        //    modem2.sendSilence();
+        //}
     }
 
     // Display
@@ -170,7 +170,8 @@ int main(int, const char**) {
         }
 
         cout << "FRAMES  : " << demod.getFrameCount() << endl;
-        cout << "PLL     : " << demod.getPLLIntegration() << endl;
+        cout << "PLL INT : " << demod.getPLLIntegration() << endl;
+        cout << "PLL ERR : " << 100.0f * demod.getClockRecoveryPhaseError() << " %" << endl;
         cout << "LAST DC : " << demod.getLastDCPower() << endl;
         cout << "MARK HZ : " << demod.getMarkFreq() << endl;
         cout << "MESSAGE : " << testListener.getMessage() << endl;
