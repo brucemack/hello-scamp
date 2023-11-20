@@ -62,13 +62,14 @@ private:
     void _edgeDetected();
 
     const int16_t _maxPhi = 0x7fff;
-    const int16_t _halfPhi = _maxPhi >> 1;
+    const int16_t _targetPhi = _maxPhi >> 1;
     const uint16_t _sampleRate;
     uint16_t _omega = 0;
     int16_t _phi = 0;
-    int16_t _targetPhi;
+    int16_t _lastPhi = 0;
     uint16_t _samplesSinceEdge = 0;
     int16_t _lastError = 0;
+    uint8_t _lastSymbol = 0;
 };
 
 }

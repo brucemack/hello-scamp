@@ -1,6 +1,8 @@
 
 #include "ClockRecoveryDLL.h"
 
+namespace scamp {
+
 ClockRecoveryDLL::ClockRecoveryDLL(uint16_t sampleRate) 
 :   _sampleRate(sampleRate) {
 }
@@ -16,12 +18,12 @@ bool ClockRecoveryDLL::processSample(uint8_t symbol) {
         _edgeDetected();
         _lastSymbol = symbol;
     }
-
     _samplesSinceEdge++;
-    _phi += _omega;
-    // See if we just passed the half mark
-    bool capture = (_lastPhi <= _halfPhi) && (_phi > _halfPhi);
-    _lastPhi = phi;
+    // Move forward and wrap
+    _phi = (_phi + _omega) & 0x7fff;
+    // When the wrap happens the phi suddenly becomes smaller
+    bool capture = _phi < _lastPhi;
+    _lastPhi = _phi;
     return capture;
 }
 
@@ -38,17 +40,13 @@ uint16_t ClockRecoveryDLL::getSamplesSinceEdge() const {
 }
 
 void ClockRecoveryDLL::_edgeDetected() {    
-    uint16_t error = 0;
-    // If we're in the second half of the phase then the error is negative
-    if (_phi > (_maxPhi >> 1)) {
-        error = _phi - _maxPhi;
-    } else {
-        error = _phi;
-    }
+    uint16_t error = _phi - _targetPhi;
     _lastError = error;
+
     // Apply the gain
     error >>= 1;
-
     _phi += error;
     _samplesSinceEdge = 0;
+}
+
 }
