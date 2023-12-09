@@ -211,7 +211,7 @@ void Demodulator::processSample(q15 sample) {
             demodulatorStart = _fftN - gap;
         }
 
-        // Correlate recent history with each of the symbol tones
+        // Correlate recent history with each of the symbol tones templates
         for (uint16_t s = 0; s < _symbolCount; s++) {
             // Here we have automatic wrapping in the _buffer space, so don't
             // worry if demodulatorStart is close to the end.
@@ -246,15 +246,17 @@ void Demodulator::processSample(q15 sample) {
         // of the symbols.  
         if (_activeSymbol == 0) {
             // Look for transition to 1
-            if (_symbolCorrAvgRatio[1] >= _symbolCorrThreshold && 
-                _symbolCorrAvgRatio[0] <= _symbolCorrThreshold) {
+            //if (_symbolCorrAvgRatio[1] >= _symbolCorrThreshold && 
+            //    _symbolCorrAvgRatio[0] <= _symbolCorrThreshold) {
+            if (_symbolCorrAvgRatio[1] > _symbolCorrAvgRatio[0]) {
                 _activeSymbol = 1;
                 _listener->bitTransitionDetected();
             }
         } else {
             // Look for transition to 0
-            if (_symbolCorrAvgRatio[0] >= _symbolCorrThreshold && 
-                _symbolCorrAvgRatio[1] <= _symbolCorrThreshold) {
+            //if (_symbolCorrAvgRatio[0] >= _symbolCorrThreshold && 
+            //    _symbolCorrAvgRatio[1] <= _symbolCorrThreshold) {
+            if (_symbolCorrAvgRatio[0] >= _symbolCorrAvgRatio[1]) {
                 _activeSymbol = 0;
                 _listener->bitTransitionDetected();
             }
