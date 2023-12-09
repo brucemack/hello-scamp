@@ -294,36 +294,41 @@ void Demodulator::processSample(q15 sample) {
             }
             // Check to see if we have accumulated a complete data frame
             else if (_frameBitCount == 30) {
+
                 _frameBitCount = 0;
                 _frameCount++;
-                Frame30 frame(_frameBitAccumulator & Frame30::MASK30LSB);
-                if (!frame.isValid()) {      
-                    if (_inDataSync) {
-                        _listener->badFrameReceived(frame.getRaw());
-                    }
-                } 
-                else {
-                    _listener->goodFrameReceived();
-                    CodeWord24 cw24 = frame.toCodeWord24();
-                    CodeWord12 cw12 = cw24.toCodeWord12();
 
-                    // Per SCAMP specification: "If the receiver decodes the same code multiple
-                    // times before receiving a different code, it should discard the redundant
-                    // decodes of the code word."
-                    if (cw12.getRaw() == _lastCodeWord12) {                        
-                        _listener->discardedDuplicate();
-                    }
+                if (_inDataSync) {
+                    Frame30 frame(_frameBitAccumulator & Frame30::MASK30LSB);
+                    //if (!frame.isValid()) {      
+                    if (false) {      
+                        if (_inDataSync) {
+                            _listener->badFrameReceived(frame.getRaw());
+                        }
+                    } 
                     else {
-                        Symbol6 sym0 = cw12.getSymbol0();
-                        Symbol6 sym1 = cw12.getSymbol1();
-                        if (sym0.getRaw() != 0) {
-                            _listener->received(sym0.toAscii());
+                        _listener->goodFrameReceived();
+                        CodeWord24 cw24 = frame.toCodeWord24();
+                        CodeWord12 cw12 = cw24.toCodeWord12();
+
+                        // Per SCAMP specification: "If the receiver decodes the same code multiple
+                        // times before receiving a different code, it should discard the redundant
+                        // decodes of the code word."
+                        if (cw12.getRaw() == _lastCodeWord12) {                        
+                            _listener->discardedDuplicate();
                         }
-                        if (sym1.getRaw() != 0) {
-                            _listener->received(sym1.toAscii());
+                        else {
+                            Symbol6 sym0 = cw12.getSymbol0();
+                            Symbol6 sym1 = cw12.getSymbol1();
+                            if (sym0.getRaw() != 0) {
+                                _listener->received(sym0.toAscii());
+                            }
+                            if (sym1.getRaw() != 0) {
+                                _listener->received(sym1.toAscii());
+                            }
                         }
+                        _lastCodeWord12 = cw12.getRaw();
                     }
-                    _lastCodeWord12 = cw12.getRaw();
                 }
             }
         }
