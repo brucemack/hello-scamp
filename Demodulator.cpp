@@ -64,6 +64,7 @@ void Demodulator::reset() {
     _frequencyLocked = false;
     _inDataSync = false;
     _frameBitCount = 0;
+    _lastCodeWord12 = 0;
 }
 
 int32_t Demodulator::getPLLIntegration() const {
@@ -287,7 +288,9 @@ void Demodulator::processSample(q15 sample) {
             if (syncFrameCorr > 28) {
                 _inDataSync = true;
                 _frameBitCount = 0;
-                _listener->dataSyncAcquired()                        ;
+                _frameCount++;
+                _lastCodeWord12 = 0;
+                _listener->dataSyncAcquired();
             }
             // Check to see if we have accumulated a complete data frame
             else if (_frameBitCount == 30) {
@@ -298,18 +301,29 @@ void Demodulator::processSample(q15 sample) {
                     if (_inDataSync) {
                         _listener->badFrameReceived(frame.getRaw());
                     }
-                } else {
+                } 
+                else {
                     _listener->goodFrameReceived();
                     CodeWord24 cw24 = frame.toCodeWord24();
                     CodeWord12 cw12 = cw24.toCodeWord12();
-                    Symbol6 sym0 = cw12.getSymbol0();
-                    Symbol6 sym1 = cw12.getSymbol1();
-                    if (sym0.getRaw() != 0) {
-                        _listener->received(sym0.toAscii());
+
+                    // Per SCAMP specification: "If the receiver decodes the same code multiple
+                    // times before receiving a different code, it should discard the redundant
+                    // decodes of the code word."
+                    if (cw12.getRaw() == _lastCodeWord12) {                        
+                        _listener->discardedDuplicate();
                     }
-                    if (sym1.getRaw() != 0) {
-                        _listener->received(sym1.toAscii());
+                    else {
+                        Symbol6 sym0 = cw12.getSymbol0();
+                        Symbol6 sym1 = cw12.getSymbol1();
+                        if (sym0.getRaw() != 0) {
+                            _listener->received(sym0.toAscii());
+                        }
+                        if (sym1.getRaw() != 0) {
+                            _listener->received(sym1.toAscii());
+                        }
                     }
+                    _lastCodeWord12 = cw12.getRaw();
                 }
             }
         }

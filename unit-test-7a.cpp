@@ -109,6 +109,11 @@ int main(int, const char**) {
         for (unsigned int i = 0; i < frameCount1; i++) {
             frames[i].transmit(modem2);
             frames[i].transmit(printModem);
+            // TEST: Double-up one of the frames just to show that the decoder will ignore it
+            if (i == 6) {
+                frames[i].transmit(modem2);
+                frames[i].transmit(printModem);            
+            }
         }
         // Trailing silence
         for (unsigned int i = 0; i < 30; i++) {

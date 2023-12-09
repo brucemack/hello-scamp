@@ -28,6 +28,7 @@ class DemodulatorListener {
 public:
 
     virtual void dataSyncAcquired() { }
+    virtual void dataSyncLost() { }
     virtual void frequencyLocked(uint16_t markFreq, uint16_t spaceFreq) { }
     virtual void goodFrameReceived() { }
     virtual void badFrameReceived(uint32_t rawFrame) { }
@@ -38,6 +39,10 @@ public:
     virtual void sampleMetrics(uint8_t activeSymbol, bool capture, 
         int32_t lastPLLError,
         float* symbolCorr, float* symbolCorrAvg, float maxCorr) { }
+    /**
+     * Called when the receiver discards a duplicate codeword
+     */
+    virtual void discardedDuplicate() { }
 };
 
 }

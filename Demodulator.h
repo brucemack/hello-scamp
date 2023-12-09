@@ -135,6 +135,8 @@ private:
     uint16_t _frameBitCount = 0;
     // The number of frames received
     uint16_t _frameCount = 0;
+    // The last code word that was received (used for duplicate detection)
+    uint16_t _lastCodeWord12 = 0;
 
     // These buffers are loaded based on the frequency that the decoder
     // decides to lock onto. The signal is convolved with these tones

@@ -1,7 +1,7 @@
 
 OBJS := build/Symbol6.o build/CodeWord12.o build/CodeWord24.o \
 	build/Frame30.o build/FileModulator.o build/Util.o build/TestModem.o \
-	build/TestModem2.o build/ClockRecoveryPLL.o \
+	build/TestModem2.o build/ClockRecoveryPLL.o  build/ClockRecoveryDLL.o \
 	build/fixed_math.o build/fixed_fft.o \
 	build/Demodulator.o build/TestDemodulatorListener.o
 
