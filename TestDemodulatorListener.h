@@ -20,6 +20,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include <cstdint>
 #include <sstream>
 
+#include "fixed_math.h"
 #include "DemodulatorListener.h"
 
 namespace scamp {
@@ -35,6 +36,7 @@ public:
      * about 40K.  
     */
     struct Sample {
+        q15 sample;
         uint8_t activeSymbol;
         uint8_t capture;
         int32_t pllError;
@@ -54,7 +56,7 @@ public:
     virtual void badFrameReceived(uint32_t rawFrame);
     virtual void goodFrameReceived();
     virtual void received(char asciiChar);
-    virtual void sampleMetrics(uint8_t activeSymbol, bool capture, 
+    virtual void sampleMetrics(q15 sample, uint8_t activeSymbol, bool capture, 
         int32_t pllError,
         float* symbolCorr, float corrThreshold, float corrDiff);
     virtual void bitTransitionDetected();

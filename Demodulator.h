@@ -118,8 +118,8 @@ private:
     //const uint16_t _maxBinHistoryBins = 4;
     uint16_t _maxBinHistory[64];
 
-    // Idicates whether the demodulator is locked onto a specific frequency
-    // or whether it is in frequency acquistion mode.
+    // Indicates whether the demodulator is locked onto a specific frequency
+    // or whether it is in frequency acquisition mode.
     bool _frequencyLocked = false;
 
     // The bin that has been selected to represent "mark"

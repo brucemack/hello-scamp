@@ -271,7 +271,7 @@ void Demodulator::processSample(q15 sample) {
         bool capture = _dataClockRecovery.processSample(_activeSymbol);
 
         // Report out all of the key parameters
-        _listener->sampleMetrics(_activeSymbol, capture, _dataClockRecovery.getLastError(), 
+        _listener->sampleMetrics(sample, _activeSymbol, capture, _dataClockRecovery.getLastError(), 
             _symbolCorr, thresholdCorr, corrDiff);
 
         // Process the sample if we are told to do so by the data clock

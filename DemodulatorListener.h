@@ -36,7 +36,7 @@ public:
     virtual void bitTransitionDetected() { }
     virtual void receivedBit(bool bit, uint16_t frameBitPos, int syncFrameCorr) { }
     // The key data used to identify symbols
-    virtual void sampleMetrics(uint8_t activeSymbol, bool capture, 
+    virtual void sampleMetrics(q15 sample, uint8_t activeSymbol, bool capture, 
         int32_t lastPLLError,
         float* symbolCorr, float corrThreshold, float corrDiff) { }
     /**

@@ -64,21 +64,17 @@ string TestDemodulatorListener::getMessage() const {
 void TestDemodulatorListener::goodFrameReceived() {
 }
 
-void TestDemodulatorListener::sampleMetrics(uint8_t activeSymbol, bool capture, 
+void TestDemodulatorListener::sampleMetrics(q15 sample, uint8_t activeSymbol, bool capture, 
    int32_t pllError,
    float* symbolCorr, float corrThreshold, float corrDiff) {
-
-    //if (capture) {
-    //    cout << pllError << endl;
-    //}
 
     if (_triggered) {
         if (_delayCounter > 0) {
             _delayCounter--;
         } else {
             if (_sampleSpacePtr < _sampleSpaceSize) {
-                // Make a sample
                 Sample* s = &(_sampleSpace[_sampleSpacePtr]);
+                s->sample = sample;
                 s->activeSymbol = activeSymbol;
                 s->capture = capture;
                 s->pllError = pllError;
