@@ -127,12 +127,12 @@ void TestDemodulatorListener::dumpSamples(std::ostream& str) const {
         }
         Sample* s = &(_sampleSpace[i]);
         str << i << " " 
-            << i / 60 << " "
+            << q15_to_f32(s->sample) << " " 
             << (int)s->activeSymbol << " " 
             << (int)s->capture << " " 
-            << s->pllError << " " 
+            << s->pllError << " | " 
             << s->symbolCorr[1] << " " 
-            << s->symbolCorr[0] << " " 
+            << s->symbolCorr[0] << " | " 
             << s->corrThreshold << " " 
             << s->corrDiff << " " 
             << endl;
