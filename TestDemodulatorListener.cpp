@@ -54,7 +54,7 @@ void TestDemodulatorListener::badFrameReceived(uint32_t rawFrame) {
 
 void TestDemodulatorListener::received(char asciiChar) {
     _msg << asciiChar;
-    //_out << "CHAR: " << asciiChar << endl;
+    //_out << "CHAR: " << asciiChar << " " << (int)asciiChar << endl;
 }
 
 string TestDemodulatorListener::getMessage() const {
@@ -66,7 +66,7 @@ void TestDemodulatorListener::goodFrameReceived() {
 
 void TestDemodulatorListener::sampleMetrics(uint8_t activeSymbol, bool capture, 
    int32_t pllError,
-   float* symbolCorr, float* symbolCorrAvg, float maxCorr) {
+   float* symbolCorr, float corrThreshold, float corrDiff) {
 
     //if (capture) {
     //    cout << pllError << endl;
@@ -84,9 +84,8 @@ void TestDemodulatorListener::sampleMetrics(uint8_t activeSymbol, bool capture,
                 s->pllError = pllError;
                 s->symbolCorr[0] = symbolCorr[0];
                 s->symbolCorr[1] = symbolCorr[1];
-                s->symbolCorrAvg[0] = symbolCorrAvg[0];
-                s->symbolCorrAvg[1] = symbolCorrAvg[1];
-                s->maxCorr = maxCorr;
+                s->corrThreshold = corrThreshold;
+                s->corrDiff = corrDiff;
                 _sampleSpacePtr++;
             }
         }
@@ -136,13 +135,10 @@ void TestDemodulatorListener::dumpSamples(std::ostream& str) const {
             << (int)s->activeSymbol << " " 
             << (int)s->capture << " " 
             << s->pllError << " " 
-            << s->maxCorr << " " 
             << s->symbolCorr[1] << " " 
             << s->symbolCorr[0] << " " 
-            << s->symbolCorrAvg[1] << " " 
-            << s->symbolCorrAvg[0] << " " 
-            << (int)(100.0 * (s->symbolCorrAvg[1] / s->maxCorr)) << " " 
-            << (int)(100.0 * (s->symbolCorrAvg[0] / s->maxCorr)) << " " 
+            << s->corrThreshold << " " 
+            << s->corrDiff << " " 
             << endl;
     }
 }

@@ -39,8 +39,8 @@ public:
         uint8_t capture;
         int32_t pllError;
         float symbolCorr[2];
-        float symbolCorrAvg[2];
-        float maxCorr;
+        float corrThreshold;
+        float corrDiff;
     };
 
     enum TriggerMode { NONE, MANUAL, ON_LOCK };
@@ -56,7 +56,7 @@ public:
     virtual void received(char asciiChar);
     virtual void sampleMetrics(uint8_t activeSymbol, bool capture, 
         int32_t pllError,
-        float* symbolCorr, float* symbolCorrAvg, float maxCorr);
+        float* symbolCorr, float corrThreshold, float corrDiff);
     virtual void bitTransitionDetected();
     virtual void receivedBit(bool bit, uint16_t frameBitPos, int syncFrameCorr);
 

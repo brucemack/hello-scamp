@@ -148,23 +148,15 @@ private:
     // The most recent correlation for each symbol
     float _symbolCorr[SYMBOL_COUNT];
 
-    // These buffers hold the recent history of the correlation between
-    // the received signal and the various demodulator tones.
-    const uint16_t _symbolCorrFilterN = 4;
-    uint16_t _symbolCorrFilterPtr = 0;
-    float _symbolCorrFilter[SYMBOL_COUNT][4];
+    const uint16_t _maxCorrHistoryN = 32;
+    uint16_t _maxCorrHistoryPtr = 0;
+    // This buffers hold the recent history of the max correlation.  This
+    // is used to determine the threshold.
+    float _maxCorrHistory[32];
 
-    // This is the threshold we use to decide if a symbol is present or not
-    float _symbolCorrThreshold = 0.75;
-
-    // The most correlation stats on the various symbols over the recent
-    // history.
-    float _symbolCorrAvg[SYMBOL_COUNT];
-    float _symbolCorrMax[SYMBOL_COUNT];
-    // The average of the symbol's correlation as a ratio of the maximum
-    // correlation seen (across all symbols) in the same period.  This
-    // is a good indicator of whether a symbol is present.
-    float _symbolCorrAvgRatio[SYMBOL_COUNT];
+    uint16_t _edgeRiseSampleCounter = 0;
+    float _lastCorrDiff = 0;
+    uint16_t _edgeRiseSampleLimit = 2;
 };
 
 }

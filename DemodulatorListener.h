@@ -38,7 +38,7 @@ public:
     // The key data used to identify symbols
     virtual void sampleMetrics(uint8_t activeSymbol, bool capture, 
         int32_t lastPLLError,
-        float* symbolCorr, float* symbolCorrAvg, float maxCorr) { }
+        float* symbolCorr, float corrThreshold, float corrDiff) { }
     /**
      * Called when the receiver discards a duplicate codeword
      */

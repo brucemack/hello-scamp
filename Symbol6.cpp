@@ -200,9 +200,14 @@ uint8_t Symbol6::getRaw() const {
 
 char Symbol6::toAscii() const {
     if (_raw < 64) {
-        return SCAMP6_TO_ASCII8[_raw];
+        uint8_t r = SCAMP6_TO_ASCII8[_raw];
+        if (r == 0 || r == 0xff) {
+            return '?';
+        } else {
+            return r;
+        }
     } else {
-        return 0;
+        return '?';
     }
 }
 }

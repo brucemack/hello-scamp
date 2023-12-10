@@ -61,8 +61,7 @@ static uint16_t golay_mult(uint16_t wd_enc) {
     return enc;
 }
 
-static uint8_t golay_hamming_weight_16(uint16_t n)
-{
+static uint8_t golay_hamming_weight_16(uint16_t n) {
     uint8_t s = 0, v;
     v = (n >> 8) & 0xFF;
     while (v)

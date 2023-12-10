@@ -53,7 +53,7 @@ Demodulator::Demodulator(uint16_t sampleFreq, uint16_t lowestFreq, uint16_t log2
     memset((void*)_buffer, 0, _fftN);
     memset((void*)_maxBinHistory, 0, sizeof(_maxBinHistory));
     memset((void*)_demodulatorTone, 0, sizeof(_demodulatorTone));
-    memset((void*)_symbolCorrFilter, 0, sizeof(_symbolCorrFilter));
+    memset((void*)_maxCorrHistory, 0, sizeof(_maxCorrHistory));
 }
 
 void Demodulator::setFrequencyLock(bool lock) {
@@ -65,6 +65,8 @@ void Demodulator::reset() {
     _inDataSync = false;
     _frameBitCount = 0;
     _lastCodeWord12 = 0;
+    _edgeRiseSampleCounter = 0;
+    _dataClockRecovery.setLock(false);
 }
 
 int32_t Demodulator::getPLLIntegration() const {
@@ -212,62 +214,65 @@ void Demodulator::processSample(q15 sample) {
         }
 
         // Correlate recent history with each of the symbol tones templates
+        float maxCorr = 0;
         for (uint16_t s = 0; s < _symbolCount; s++) {
             // Here we have automatic wrapping in the _buffer space, so don't
             // worry if demodulatorStart is close to the end.
             _symbolCorr[s] = corr_real_complex_2(_buffer, demodulatorStart, _fftN, 
                 _demodulatorTone[s], _demodulatorToneN);
-            // Here we keep track of some recent history of the symbol 
-            // correlation.
-            _symbolCorrFilter[s][_symbolCorrFilterPtr] = _symbolCorr[s];
-        }
-        _symbolCorrFilterPtr = incAndWrap(_symbolCorrFilterPtr, _symbolCorrFilterN);
-
-        // Calculate the recent max and average correlation of each symbol
-        // from the history series.
-        float overallMaxCorr = 0;
-        for (uint16_t s = 0; s < _symbolCount; s++) {
-            _symbolCorrAvg[s] = 0;
-            _symbolCorrMax[s] = 0;
-            for (uint16_t n = 0; n < _symbolCorrFilterN; n++) {
-                float corr = _symbolCorrFilter[s][n];
-                _symbolCorrAvg[s] += corr;
-                _symbolCorrMax[s] = std::max(_symbolCorrMax[s], corr);
-                overallMaxCorr = std::max(overallMaxCorr, corr);
-            }
-            _symbolCorrAvg[s] /= (float)_symbolCorrFilterN;
+            maxCorr = std::max(maxCorr, _symbolCorr[s]);
         }
 
-        for (uint16_t s = 0; s < _symbolCount; s++) {
-            _symbolCorrAvgRatio[s] = _symbolCorrAvg[s] / overallMaxCorr;
-        }
+        // Here we track the recent history of the maximum correlation
+        _maxCorrHistory[_maxCorrHistoryPtr] = maxCorr;
+        _maxCorrHistoryPtr = incAndWrap(_maxCorrHistoryPtr, _maxCorrHistoryN);
     
+        // Figure out the current threshold by averaging 
+        float thresholdCorr = 0;
+        for (uint16_t i = 0; i < _maxCorrHistoryN; i++) {
+            thresholdCorr += _maxCorrHistory[i];
+        }
+        thresholdCorr /= (2.0 * (float)_maxCorrHistoryN);
+
+        // The difference is adjusted so that a transition is always an increasing
+        // difference.
+        float corrDiff;
+        if (_activeSymbol == 0) {
+            corrDiff = _symbolCorr[1] - _symbolCorr[0];
+        } else {
+            corrDiff = _symbolCorr[0] - _symbolCorr[1];
+        }
+
         // Look for an inflection point in the respective correlations 
         // of the symbols.  
-        if (_activeSymbol == 0) {
-            // Look for transition to 1
-            //if (_symbolCorrAvgRatio[1] >= _symbolCorrThreshold && 
-            //    _symbolCorrAvgRatio[0] <= _symbolCorrThreshold) {
-            if (_symbolCorrAvgRatio[1] > _symbolCorrAvgRatio[0]) {
-                _activeSymbol = 1;
-                _listener->bitTransitionDetected();
+        if (corrDiff > thresholdCorr) {
+            // If we are still increasing then let it keep going up before 
+            // declaring an edge transition
+            if (corrDiff > _lastCorrDiff && 
+                _edgeRiseSampleCounter < _edgeRiseSampleLimit) {
+                _edgeRiseSampleCounter++;
             }
-        } else {
-            // Look for transition to 0
-            //if (_symbolCorrAvgRatio[0] >= _symbolCorrThreshold && 
-            //    _symbolCorrAvgRatio[1] <= _symbolCorrThreshold) {
-            if (_symbolCorrAvgRatio[0] >= _symbolCorrAvgRatio[1]) {
-                _activeSymbol = 0;
+            else {
+                // Reverse the active symbol
+                if (_activeSymbol == 0) {
+                    _activeSymbol = 1;
+                }
+                else {
+                    _activeSymbol = 0;
+                }
+                _edgeRiseSampleCounter = 0;
                 _listener->bitTransitionDetected();
             }
         }
+
+        _lastCorrDiff = corrDiff;
 
         // Show the sample to the PLL for clock recovery
         bool capture = _dataClockRecovery.processSample(_activeSymbol);
 
         // Report out all of the key parameters
-        _listener->sampleMetrics(_activeSymbol, capture, _dataClockRecovery.getLastError(), _symbolCorr,
-            _symbolCorrAvg, overallMaxCorr);
+        _listener->sampleMetrics(_activeSymbol, capture, _dataClockRecovery.getLastError(), 
+            _symbolCorr, thresholdCorr, corrDiff);
 
         // Process the sample if we are told to do so by the data clock
         // recovery PLL.
@@ -292,6 +297,7 @@ void Demodulator::processSample(q15 sample) {
                 _frameBitCount = 0;
                 _frameCount++;
                 _lastCodeWord12 = 0;
+                _dataClockRecovery.setLock(true);
                 _listener->dataSyncAcquired();
             }
             // Check to see if we have accumulated a complete data frame
@@ -302,17 +308,15 @@ void Demodulator::processSample(q15 sample) {
 
                 if (_inDataSync) {
                     Frame30 frame(_frameBitAccumulator & Frame30::MASK30LSB);
-                    //if (!frame.isValid()) {      
-                    if (false) {      
-                        if (_inDataSync) {
-                            _listener->badFrameReceived(frame.getRaw());
-                        }
+
+                    _listener->goodFrameReceived();
+                    CodeWord24 cw24 = frame.toCodeWord24();
+                    CodeWord12 cw12 = cw24.toCodeWord12();
+
+                    if (!cw12.isValid()) {
+                        _listener->badFrameReceived(frame.getRaw());
                     } 
                     else {
-                        _listener->goodFrameReceived();
-                        CodeWord24 cw24 = frame.toCodeWord24();
-                        CodeWord12 cw12 = cw24.toCodeWord12();
-
                         // Per SCAMP specification: "If the receiver decodes the same code multiple
                         // times before receiving a different code, it should discard the redundant
                         // decodes of the code word."
@@ -329,8 +333,9 @@ void Demodulator::processSample(q15 sample) {
                                 _listener->received(sym1.toAscii());
                             }
                         }
-                        _lastCodeWord12 = cw12.getRaw();
                     }
+
+                    _lastCodeWord12 = cw12.getRaw();
                 }
             }
         }

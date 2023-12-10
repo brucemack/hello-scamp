@@ -65,10 +65,17 @@ public:
      */
     uint16_t getSamplesSinceEdge() const;
 
+    /**
+     * Use this method to control whether the DLL is free or locked.
+     * When locked, the ability to change phase is highly restricted.
+    */
+    void setLock(bool locked) { _locked = locked; };
+
 private:
 
     void _edgeDetected();
 
+    bool _locked = false;
     const int16_t _maxPhi = 0x7fff;
     const int16_t _targetPhi = _maxPhi >> 1;
     const uint16_t _sampleRate;
