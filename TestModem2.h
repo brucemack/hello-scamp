@@ -29,15 +29,13 @@ class TestModem2 : public Modulator {
 public:
 
     TestModem2(float* samples, unsigned int samplesSize, unsigned int sampleRate,
-        unsigned int samplesPerSymbol,
         unsigned int markFreq, unsigned int spaceFreq, float amp, 
         float dcBias = 0, float noiseAmp = 0);
     virtual ~TestModem2() { }
 
-    virtual void sendSilence();
-    virtual void sendHalfSilence();
-    virtual void sendMark();
-    virtual void sendSpace();
+    virtual void sendSilence(uint32_t us);
+    virtual void sendMark(uint32_t us);
+    virtual void sendSpace(uint32_t us);
 
     uint32_t getSamplesUsed() const { return _samplesUsed; }
 
@@ -49,7 +47,6 @@ private:
     unsigned int _samplesSize;
     uint32_t _samplesUsed = 0;
     unsigned int _sampleRate;
-    unsigned int _samplesPerSymbol;
     unsigned int _markFreq;
     unsigned int _spaceFreq;
     float _amp;

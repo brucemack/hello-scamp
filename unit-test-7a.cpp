@@ -47,6 +47,7 @@ using namespace scamp;
 const unsigned int sampleFreq = 2000;
 const uint16_t lowFreq = 50;
 const unsigned int samplesPerSymbol = 60;
+const unsigned int usPerSymbol = (1000000 / sampleFreq) * samplesPerSymbol;
 const unsigned int markFreq = 667;
 const unsigned int spaceFreq = 600;
 
@@ -82,7 +83,7 @@ int main(int, const char**) {
     //
     // Note that we have applied random noise to the signal to ensure that 
     // this doesn't create a problem.
-    TestModem2 modem2(samples, S, sampleFreq, samplesPerSymbol, 
+    TestModem2 modem2(samples, S, sampleFreq, 
         markFreq + tuningErrorHz, spaceFreq + tuningErrorHz, 0.3, 0.1, 0.07);
 
     // This is a modem that is used to capture the data for printing.
@@ -104,27 +105,27 @@ int main(int, const char**) {
     
         // This silence is 30 symbols, or 30 * 60 = 1800 samples long
         for (unsigned int i = 0; i < 30; i++)
-            modem2.sendSilence();
+            modem2.sendSilence(usPerSymbol);
 
         for (unsigned int i = 0; i < frameCount1; i++) {
-            frames[i].transmit(modem2);
-            frames[i].transmit(printModem);
+            frames[i].transmit(modem2, usPerSymbol);
+            frames[i].transmit(printModem, usPerSymbol);
             // TEST: Double-up one of the frames just to show that the decoder will ignore it
             if (i == 6) {
-                frames[i].transmit(modem2);
-                frames[i].transmit(printModem);            
+                frames[i].transmit(modem2, usPerSymbol);
+                frames[i].transmit(printModem, usPerSymbol);            
             }
         }
         // Trailing silence
         for (unsigned int i = 0; i < 30; i++) {
-            modem2.sendSilence();
+            modem2.sendSilence(usPerSymbol);
         }
 
         unsigned int frameCount2 = encodeString(testMessage2, frames, 45, true);
         assertm(frameCount2 < 32, "FRAME COUNT");
 
         for (unsigned int i = 0; i < frameCount2; i++) {
-            frames[i].transmit(modem2);
+            frames[i].transmit(modem2, usPerSymbol);
         }
         // Trailing silence
         //for (unsigned int i = 0; i < 30; i++) {

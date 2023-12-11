@@ -20,24 +20,16 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 namespace scamp {
 
     /**
-     * A generic interface for a modulator that would be driven by 
-     * an encoder.
+     * A generic interface for a modulator that would be driven by an encoder.
      */
     class Modulator {
     public:
 
         virtual ~Modulator() { }
 
-        virtual void sendSilence() { }
-
-        /**
-         * Sends a silence for half of a symbol period. Useful for 
-         * synchronization testing
-         */
-        virtual void sendHalfSilence() { }
-
-        virtual void sendMark() = 0;
-        virtual void sendSpace() = 0;
+        virtual void sendSilence(uint32_t durationUs) { }
+        virtual void sendMark(uint32_t durationUs) = 0;
+        virtual void sendSpace(uint32_t durationUs) = 0;
     };
 }
 

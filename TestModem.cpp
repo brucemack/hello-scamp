@@ -18,39 +18,37 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 namespace scamp {
 
-TestModem::TestModem(int8_t* samples, unsigned int samplesSize, unsigned int samplesPerSymbol) 
+TestModem::TestModem(int8_t* samples, uint32_t samplesSize, uint32_t sampleRate) 
 :   _samples(samples),
     _samplesSize(samplesSize),
     _samplesUsed(0),
-    _samplesPerSymbol(samplesPerSymbol) {
+    _sampleRate(sampleRate) {
 }
 
-void TestModem::sendSilence() {
-    for (unsigned int i = 0; i < _samplesPerSymbol; i++) {
+void TestModem::sendSilence(uint32_t us) {
+    // Convert us to samples
+    uint32_t samples = (_sampleRate * us) / 1000000;
+    for (unsigned int i = 0; i < samples; i++) {
         if (_samplesUsed < _samplesSize) {
             _samples[_samplesUsed++] = 0;
         }
     }
 }
 
-void TestModem::sendHalfSilence() {
-    for (unsigned int i = 0; i < _samplesPerSymbol / 2; i++) {
-        if (_samplesUsed < _samplesSize) {
-            _samples[_samplesUsed++] = 0;
-        }
-    }
-}
-
-void TestModem::sendMark() {
-    for (unsigned int i = 0; i < _samplesPerSymbol; i++) {
+void TestModem::sendMark(uint32_t us) {
+    // Convert us to samples
+    uint32_t samples = (_sampleRate * us) / 1000000;
+    for (unsigned int i = 0; i < samples; i++) {
         if (_samplesUsed < _samplesSize) {
             _samples[_samplesUsed++] = 1;
         }
     }
 }
 
-void TestModem::sendSpace() {
-    for (unsigned int i = 0; i < _samplesPerSymbol; i++) {
+void TestModem::sendSpace(uint32_t us) {
+    // Convert us to samples
+    uint32_t samples = (_sampleRate * us) / 1000000;
+    for (unsigned int i = 0; i < samples; i++) {
         if (_samplesUsed < _samplesSize) {
             _samples[_samplesUsed++] = -1;
         }

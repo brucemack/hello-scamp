@@ -31,13 +31,11 @@ static std::normal_distribution<float> d(0.0, 1.0);
 
 TestModem2::TestModem2(float* samples, unsigned int samplesSize, 
     unsigned int sampleRate,
-    unsigned int samplesPerSymbol,
     unsigned int markFreq, unsigned int spaceFreq, float amp, 
     float dcBias, float noiseAmp) 
 :   _samples(samples),
     _samplesSize(samplesSize),
     _sampleRate(sampleRate),
-    _samplesPerSymbol(samplesPerSymbol),
     _markFreq(markFreq),
     _spaceFreq(spaceFreq),
     _amp(amp),
@@ -53,25 +51,21 @@ float TestModem2::_getNoise() {
     }
 }
 
-void TestModem2::sendSilence() {
-    for (unsigned int i = 0; i < _samplesPerSymbol; i++) {
+void TestModem2::sendSilence(uint32_t us) {
+    // Convert us to samples
+    uint32_t samples = (_sampleRate * us) / 1000000;
+    for (unsigned int i = 0; i < samples; i++) {
         if (_samplesUsed < _samplesSize) {
             _samples[_samplesUsed++] = _dcBias + _getNoise();
         }
     }
 }
 
-void TestModem2::sendHalfSilence() {
-    for (unsigned int i = 0; i < _samplesPerSymbol / 2; i++) {
-        if (_samplesUsed < _samplesSize) {
-            _samples[_samplesUsed++] = _dcBias + _getNoise();
-        }
-    }
-}
-
-void TestModem2::sendMark() {
+void TestModem2::sendMark(uint32_t us) {
+    // Convert us to samples
+    uint32_t samples = (_sampleRate * us) / 1000000;
     float omega = 2.0f * 3.1415926f * (float)_markFreq / (float)_sampleRate;
-    for (unsigned int i = 0; i < _samplesPerSymbol; i++) {
+    for (unsigned int i = 0; i < samples; i++) {
         if (_samplesUsed < _samplesSize) {
             _samples[_samplesUsed++] = _amp * std::cos(_phi) + _dcBias + _getNoise();
             _phi += omega;
@@ -79,9 +73,11 @@ void TestModem2::sendMark() {
     }
 }
 
-void TestModem2::sendSpace() {
+void TestModem2::sendSpace(uint32_t us) {
+    // Convert us to samples
+    uint32_t samples = (_sampleRate * us) / 1000000;
     float omega = 2.0f * 3.1415926f * (float)_spaceFreq / (float)_sampleRate;
-    for (unsigned int i = 0; i < _samplesPerSymbol; i++) {
+    for (unsigned int i = 0; i < samples; i++) {
         if (_samplesUsed < _samplesSize) {
             _samples[_samplesUsed++] = _amp * std::cos(_phi) + _dcBias + _getNoise();
             _phi += omega;

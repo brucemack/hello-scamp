@@ -260,12 +260,12 @@ float corr_real_complex_2(const q15* c0, uint16_t c0Base, uint16_t c0Size,
            std::floor((abs_result_r + abs_result_i) / 2.0);
 }
 
-uint16_t modulateMessage(const char* asciiMsg, Modulator& mod,
+uint16_t modulateMessage(const char* asciiMsg, Modulator& mod, uint32_t symbolUs,
     Frame30* frames, uint16_t maxFrames) {
     uint16_t frameCount = encodeString(asciiMsg, frames, maxFrames, true);
     // Transmit the encoded message frames
     for (unsigned int i = 0; i < frameCount; i++) {
-        frames[i].transmit(mod);
+        frames[i].transmit(mod, symbolUs);
     }
     return frameCount;
 }

@@ -25,21 +25,20 @@ namespace scamp {
 class TestModem : public Modulator {
 public:
 
-    TestModem(int8_t* samples, unsigned int tonesSize, unsigned int samplesPerSymbol);
+    TestModem(int8_t* samples, uint32_t samplesSize, uint32_t sampleRate);
 
-    virtual void sendSilence();
-    virtual void sendHalfSilence();
-    virtual void sendMark();
-    virtual void sendSpace();
+    virtual void sendSilence(uint32_t us);
+    virtual void sendMark(uint32_t us);
+    virtual void sendSpace(uint32_t us);
 
     unsigned int getSamplesUsed() const { return _samplesUsed; }
 
 private:
 
     int8_t* _samples;
-    unsigned int _samplesSize;
-    unsigned int _samplesUsed;
-    unsigned int _samplesPerSymbol;
+    uint32_t _samplesSize;
+    uint32_t _samplesUsed;
+    uint32_t _sampleRate;
 };
 
 }

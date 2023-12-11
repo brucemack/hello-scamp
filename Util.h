@@ -92,10 +92,10 @@ uint16_t wrapIndex(uint16_t base, uint16_t disp, uint16_t size);
 void render_spectrum(std::ostream& str, const cq15* x, uint16_t fftN, uint16_t sampleFreq);
 
 /**
- * Takes a null-temrinated ASCII message, encodes it, and transmits
+ * Takes a null-terminated ASCII message, encodes it, and transmits
  * it using the modulator provided.
  */
-uint16_t modulateMessage(const char* asciiMsg, Modulator& mod,  
+uint16_t modulateMessage(const char* asciiMsg, Modulator& mod, uint32_t symbolUs,
     Frame30* frames, const uint16_t maxFrames);
 }
 

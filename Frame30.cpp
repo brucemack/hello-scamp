@@ -119,13 +119,13 @@ uint32_t Frame30::getRaw() const {
 }
 
 // MSB is transmitted first!
-void Frame30::transmit(Modulator& mod) {
+void Frame30::transmit(Modulator& mod, uint32_t symbolDurationUs, int16_t errorMs) {
     uint32_t work = _raw;
     for (unsigned int i = 0; i < 30; i++) {
         if (work & MASK30_HIGH) {
-            mod.sendMark();
+            mod.sendMark(symbolDurationUs);
         } else {
-            mod.sendSpace();
+            mod.sendSpace(symbolDurationUs);
         }
         work <<= 1;
     }

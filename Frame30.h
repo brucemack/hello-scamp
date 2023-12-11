@@ -92,9 +92,9 @@ namespace scamp {
         unsigned int getComplimentCount() const;
 
         /**
-         * Transmits frame contents
+         * Transmits frame contents.
          */
-        void transmit(Modulator& modulator);
+        void transmit(Modulator& modulator, uint32_t symbolDurationUs, int16_t errorMs = 0);
 
     private:
 
