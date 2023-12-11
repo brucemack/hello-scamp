@@ -177,7 +177,7 @@ void Demodulator::processSample(q15 sample) {
                 // If one bin is dominating then perform a lock
                 if (maxBinPower > _binPowerThreshold && 
                     hitPct > 0.75 && 
-                    maxBinPowerFract > 0.30) {
+                    maxBinPowerFract > 0.20) {
 
                     _frequencyLocked = true;
                     _lockedBinMark = maxBin;
