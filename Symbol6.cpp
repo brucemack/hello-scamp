@@ -202,12 +202,12 @@ char Symbol6::toAscii() const {
     if (_raw < 64) {
         uint8_t r = SCAMP6_TO_ASCII8[_raw];
         if (r == 0 || r == 0xff) {
-            return '?';
+            return ' ';
         } else {
             return r;
         }
     } else {
-        return '?';
+        return ' ';
     }
 }
 }

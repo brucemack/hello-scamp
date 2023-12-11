@@ -117,6 +117,9 @@ private:
     const uint16_t _maxBinHistorySize = 64;
     //const uint16_t _maxBinHistoryBins = 4;
     uint16_t _maxBinHistory[64];
+    // The power threshold used for detecting a valid signal
+    // Power of 0.002 was measured with Vpp = 1.5v
+    float _binPowerThreshold = 5.0e-4;
 
     // Indicates whether the demodulator is locked onto a specific frequency
     // or whether it is in frequency acquisition mode.

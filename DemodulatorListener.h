@@ -18,6 +18,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #define _DemodulatorListener_h
 
 #include <cstdint>
+#include "fixed_math.h"
 
 namespace scamp {
 
@@ -35,10 +36,14 @@ public:
     virtual void received(char asciiChar) { }
     virtual void bitTransitionDetected() { }
     virtual void receivedBit(bool bit, uint16_t frameBitPos, int syncFrameCorr) { }
-    // The key data used to identify symbols
+
+    /**
+     * The key data used to identify symbols.
+     */
     virtual void sampleMetrics(q15 sample, uint8_t activeSymbol, bool capture, 
         int32_t lastPLLError,
         float* symbolCorr, float corrThreshold, float corrDiff) { }
+
     /**
      * Called when the receiver discards a duplicate codeword
      */
