@@ -175,7 +175,9 @@ void Demodulator::processSample(q15 sample) {
                 float hitPct = (float)hitCount / (float)binHistoryLength;
 
                 // If one bin is dominating then perform a lock
-                if (hitPct > 0.9 && maxBinPowerFract > 0.10) {
+                if (maxBinPower > _binPowerThreshold && 
+                    hitPct > 0.75 && 
+                    maxBinPowerFract > 0.30) {
 
                     _frequencyLocked = true;
                     _lockedBinMark = maxBin;
@@ -232,7 +234,9 @@ void Demodulator::processSample(q15 sample) {
         for (uint16_t i = 0; i < _maxCorrHistoryN; i++) {
             thresholdCorr += _maxCorrHistory[i];
         }
-        thresholdCorr /= (2.0 * (float)_maxCorrHistoryN);
+        // The correlation diff must reach 33% of the recent maximum correlation 
+        // to be considered a transition.
+        thresholdCorr /= (3.0 * (float)_maxCorrHistoryN);
 
         // The difference is adjusted so that a transition is always an increasing
         // difference.
