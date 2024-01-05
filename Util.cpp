@@ -232,28 +232,20 @@ float corr_real_complex_2(const q15* c0, uint16_t c0Base, uint16_t c0Size,
     float result_i = 0;
 
     for (uint16_t i = 0; i < c1Len; i++) {
+        // Real value
         float a = q15_to_f32(c0[wrapIndex(c0Base, i, c0Size)]);
+        // Real value
         float c = q15_to_f32(c1[i].r);
-        // Complex conjugate
+        // Complex conjugate value
         float d = -q15_to_f32(c1[i].i);
-        // Use the method that minimizes multiplication
-        float ac = a * c;
-        float a_plus_b = a;
-        float c_plus_d = c + d;
-        float p0 = a_plus_b * c_plus_d;
-        result_r += (ac);
-        result_i += (p0 - ac);
+        result_r += (a * c);
+        result_i += (a * d);
     }
-
-    // Normally this would be scaled back to the length of the series, 
-    // but we're skipping this because we don't care about the scale.
-    //result_r /= (float)c1Len;
-    //result_i /= (float)c1Len;
     
-    // We are using an approximation of the square/square root magnitude
-    // calculator here:
     //return std::sqrt(result_r * result_r + result_i * result_i);
 
+    // We are using an approximation of the square/square root magnitude
+    // calculator here:
     float abs_result_r = std::abs(result_r);
     float abs_result_i = std::abs(result_i);
     return std::max(abs_result_r, abs_result_i) + 
